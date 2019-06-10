@@ -1,0 +1,21 @@
+
+
+var tblName="km.table1"
+val filterOutWords = Set("INC", "LLC", "A")
+
+var infBaseDataDF = spark.table(tblName)
+val keyWordsDF = infBaseDataDF.select("company_name1", "company_name2").
+ filter($"company_name1" =!= "").
+ withColumn("company_name_drv", regexp_replace(regexp_replace(upper($"company_name1"), "[^a-zA-Z /]+", ""), "[/]+", " ")).
+ withColumn("company_name_drv", regexp_replace(regexp_replace(upper($"company_name2"), "[^a-zA-Z /]+", ""), "[/]+", " ")).
+ show(4,false)
+ 
+keyWordsDF.select("company_name1_drv","company_name2_drv").rdd.
+ map(c1 => {var s1 = c1(0).toString.split(" ").toSet.diff(filterOutWords);
+            var s2 = c1(1).toString.split(" ").toSet.diff(filterOutWords);
+   (s1.mkString(" "), s2.mkString(" "), s1.intersect(s2).mkString(" ") )
+ }).
+ toDF("company_name1_drv_2","company_name2_drv_2","matched_words").
+ show(100,false)
+
+
