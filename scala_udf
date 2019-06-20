@@ -1,0 +1,16 @@
+
+--Standalone functions--
+val colstr = (colstr: String) => {colstr.length}
+=>colstr("abcd")
+
+--udf --
+val udf_df_colstr = org.apache.spark.sql.functions.udf { (col1:String) => col1.length }
+val udf_df_colstr2 = spark.udf.register("udf_sql_colstr", colstr) //From existing function
+val udf_df_colstr3 = spark.udf.register("udf_sql_colstr", (col1:String) => {col1.length} )
+
+#use:
+Seq("aa","bbb").toDF("col1").withColumn("col_len", udf_df_colstr($"col1")).show(false)
+var strExt="AAAAAAA"
+Seq("aa","bbb").toDF("col1").withColumn("col_len", udf_colstr(lit(strExt))).show(false)
+
+
