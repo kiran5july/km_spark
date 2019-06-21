@@ -1,0 +1,59 @@
+//spark2-shell --queue general --conf spark.ui.port=4060 --driver-class-path /etc/spark2/conf:/etc/hive/conf
+
+var sTbl1="vivid.tbl_01"  //297
+var sTbl2="vivid.tbl_02"  //800
+
+val filterOutWords = Seq("INC", "LLC","THE","AND")
+var dfTbl1 = spark.table(sTbl1).
+ select("relationship_name").withColumn("relationship_name_words", regexp_replace(regexp_replace(upper($"relationship_name"), "[^a-zA-Z0-9 /]+", ""), "[/]+", " "))
+var dfTbl2 = spark.table(sTbl2).
+ select("merchant_name").withColumn("merchant_name_words", regexp_replace(regexp_replace(upper($"merchant_name"), "[^a-zA-Z0-9 /]+", ""), "[/]+", " "))
+
+var dfTbl1_split = dfTbl1.
+ map(rec => (rec.getString(1), rec.getString(1).split(" ").toSeq.filter(_.nonEmpty).diff(filterOutWords))).toDF("relationship_name_words", "words_list")
+var dfTbl2_split = dfTbl2.
+ map(rec => (rec.getString(1), rec.getString(1).split(" ").toSeq.filter(_.nonEmpty).diff(filterOutWords))).toDF("merchant_name_words", "words_list")
+
+
+val mapTbl1 =  dfTbl1.
+ map(rec => (rec.getString(1), rec.getString(1).split(" ").toSeq.filter(_.nonEmpty).diff(filterOutWords))).
+ rdd.collectAsMap
+
+
+val mapTbl2 = dfTbl2.
+ map(rec => (rec.getString(1), rec.getString(1).split(" ").toSeq.filter(_.nonEmpty).diff(filterOutWords))).
+ rdd.collectAsMap
+
+for ((k, v) <- mapTbl2) println( k+":  "+ v)
+
+
+mapTbl1.get("BIG LOTS STORES INC")
+mapTbl1.filterKeys(_.startsWith("BIG"))
+
+//Create a Map(string, string)
+var req2MatchesMap = collection.mutable.Map(mapTbl2.map(x=>(x._1, "".toString)).toSeq: _*)
+//var xreq2MatchesMap = collection.mutable.Map(mapTbl2.map(x=>(x._1, Seq(""))).toSeq: _*)
+
+for ((merch, words2) <- mapTbl2){
+ println( merch+":  "+ words2)
+ for ((rel, words1) <- mapTbl1){
+  val matches = words2.filter(x => words1.contains(x)).toList
+  //println(" -->"+matches+" ->"+matches.size)
+  if(matches.size>0){
+   println(" ->"+rel+": "+matches)
+   req2MatchesMap.update(merch, (req2MatchesMap.get(merch).getOrElse("")+"|"+rel).toString)
+  }
+ }
+}
+//for ((k, v) <- req2MatchesMap) println( k+":  "+ v)
+
+var outHDFSPath="/km/data_export/"
+var outFilePrefix="names_matches_"
+
+req2MatchesMap.toSeq.toDF("merchant_name_words","matches").
+ join(dfTbl2, Seq("merchant_name_words")).select("merchant_name", "matches").
+ coalesce(1).write.options(Map("delimiter" -> ",", "header"->"true")).
+ csv(outHDFSPath+outFilePrefix+new java.text.SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new java.util.Date()))
+
+import sys.process._
+s"hdfs dfs -ls -t $outHDFSPath" !
