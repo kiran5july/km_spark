@@ -1,0 +1,33 @@
+
+//Source files are at:
+var inputHDFSPath="/km/data_input/"
+var outFilePrefix="infinite_sample_addr_"
+
+import sys.process._
+val req_aud_km = df_cs_request_audience.map(rec => (rec.getString(4), (rec.getString(0), rec.getString(3)))).rdd.groupByKey.mapValues(_.toList).collectAsMap
+//Returns (fileName & fileInfo[req_id,req_name]) into Map
+//file contents: emp_id,emp_name
+
+//Create blank DF
+var df_data=Seq(("","","","","","","","","","")).toDF("req_id","process_ts","create_ts","req_name","emp_id","emp_name","default_score","process_date")
+val proc_st_ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date())
+
+for ((fileName, fileInfo) <- req_aud_km)
+{
+  println(getDTFormat() + ":--- Data File: " + fileName);
+  val df_data_file = spark.read.csv(inputHDFSPath+ "/" + fileName)
+
+  if(df_data_file.columns.size > 0 ) 
+  {
+        df_data=df_data.union( 
+         df_data_file.toDF("emp_id","emp_name").
+          select( lit(fileInfo(0)._1).as("req_id")
+          , lit(proc_st_ts).as("process_ts")
+          , lit(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date())).as("create_ts")
+          , lit(fileInfo(0)._2).as("req_name")
+          , $"emp_id", $"emp_name"
+          , lit("0").as("default_score")
+          ,lit(java.time.LocalDate.now.toString).as("process_date")
+         ));
+  }
+}
