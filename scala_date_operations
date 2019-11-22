@@ -1,12 +1,18 @@
 
+//----- insert: date in yyyy--MM-dd
+df.select (...
+           ,lit(java.time.LocalDate.now.toString()).as("process_date")
+           ...).
+ write.mode("overwrite").insertInto(sDBName+".mytable1");
+
 //------ insert: timestamp column -----------
 val proc_st_ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date())
 df.select(  ...
          ,lit(proc_st_ts).as("process_ts")
          ,lit(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date())).as("create_ts")
-         ...)
+         ...).
          
- .coalesce(1).write.insertInto(sDBName+".table")
+ coalesce(1).write.insertInto(sDBName+".table")
  
  
  
@@ -14,7 +20,7 @@ df.select(  ...
  spark.table(sDBName+".csig_request").
    filter($"process_ts">=date_add(current_date(),0)).
   //filter(date_format($"process_ts", "yyyy-MM-dd") >= date_add(current_date(),-1) ).
-  
+  filter($"process_date" >= java.time.LocalDate.now.toString() )
   orderBy($"process_ts".desc)
   
   
