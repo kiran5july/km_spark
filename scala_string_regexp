@@ -19,3 +19,14 @@ keyWordsDF.select("company_name1_drv","company_name2_drv").rdd.
  show(100,false)
 
 
+
+//-------- Extract Franchise#/Store# from company_name----
+
+var infBaseDataDF = spark.table(tblName)
+val keyWordsDF = infBaseDataDF.select("company_name").
+ withColumn("company_name_drv", regexp_extract($"company_name", "[\\d]+",0)).
+ show(100,false)
+ 
+ 
+ 
+ 
