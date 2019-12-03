@@ -1,0 +1,27 @@
+
+//Date variable
+val proc_st_ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date())
+var prc_date=(java.time.LocalDate.now)
+ 
+ 
+//Set dynamic partition
+spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+
+
+//-------- insert directly from dataframe
+df.select($"col1", $"col2", $"col3", lit(current_date).as("extract_date") ).
+ write.mode("overwrite").
+ insertInto(s"$sDBName.t_orders")
+ 
+ 
+
+
+//------------Using temp view
+
+df_orders.createOrReplaceTempView("km_tmp_view")
+spark.sql(s"INSERT into $sDBName.t_orders SELECT request_id,'$proc_st_ts',merchant_id,'$prc_date' FROM df_orders");
+
+spark.sql(s"INSERT INTO $sDBName.t_orders partition (process_date='$prc_date') SELECT * from df_orders");
+
+spark.sql(s"REFRESH TABLE $sDBName.t_orders")
+
