@@ -1,0 +1,13 @@
+
+
+
+filter(
+      $"extract_date".gt(date_add(current_date,-30))
+   && $"cp_indicator" === "CP"
+   && $"a_dbt" > 0
+   && $"c_denial".isin("000","")
+   && coalesce($"x_stld", lit("")) =!= "Z"
+   
+   
+   ).
+   
