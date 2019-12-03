@@ -1,0 +1,28 @@
+
+//--------- Read from table & overwrite
+
+var sTableName = ""
+var sTmpDirName = ""
+var sDBName = "data_comm"
+val inputHDFSPath = "/hdfs/path"
+
+sTableName = s"$sDBName.orders"
+sTmpDirName = s"${inputHDFSPath}/tmp_orders"
+
+//---Staging in HDFS
+spark.table(sTableName).write.options(Map("delimiter"->"|")).mode("overwrite").csv(sTmpDirName)
+
+spark.read.options(Map("delimiter"->"|")).
+ csv(sTmpDirName).
+ coalesce(1).
+ write.mode("overwrite").insertInto(sTableName)
+
+
+
+//---staging in a table as temp
+spark.table(sTableName).write.saveAsTable(s"${sTableName}_tmp")
+
+spark.table(s"${sTableName}_tmp").coalesce(4).write.mode("overwrite").insertInto(sTableName)
+
+spark.sql(s"drop table ${sTableName}_tmp")
+
