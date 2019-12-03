@@ -1,0 +1,18 @@
+
+
+//Read columns from Hive repository & apply them to dataframe
+
+val arrayCols = spark.sql("describe kmdb.orders").coalesce(1).
+ select("col_name").
+ filter(not($"col_name".startsWith("#")) ).
+ rdd.map(x => x(0).toString).
+ collect.toArray
+ 
+//remove dupliates (come from partition columns) from Array retaining sequence
+val sColumns = arrayCols.foldLeft(Array[String]()){ (acc,elem) =>
+  if (acc.contains(elem)) acc else acc :+ elem
+}.mkString(",")
+
+spark.read.csv("/hive/path/km_data").
+ toDF(sColumns.split(",").toSeq: _*).
+ show(false)
