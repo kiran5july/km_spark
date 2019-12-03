@@ -19,4 +19,15 @@ spark.table("kmdb.orders").
 
 
 
+//------------------avg-------------------
+//sample input
+val rec = Seq( (1, 2), (1,4) , (2,5) , (2,3) ).toDF("id","value")
+
+//---- group & get avg
+rec.groupBy("id").agg(avg("value")).show()
+
+//----- Window to retain other columns
+val wId = org.apache.spark.sql.expressions.Window.partitionBy("id")
+rec.withColumn("avg", avg("value").over(wId)).show()
+
 
