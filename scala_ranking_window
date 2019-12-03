@@ -1,0 +1,16 @@
+
+
+//---- Objective: Get the top zip for every id
+//---- Get top rank() with more trans count & high amount by id and zip (due to mulitple txns by id)
+val rankSha = org.apache.spark.sql.expressions.Window.partitionBy("id").
+  orderBy($"id", desc("tran_cnt"), desc("tran_amt") )
+
+df_trans.select("id","i_phys_zip", "tran_amt").
+ groupBy("id","i_phys_zip").agg(count("id").as("tran_cnt"), sum("tran_amt").as("tran_amt")).
+ withColumn("rownum", row_number().over(rankSha)).
+ filter($"rownum" === 1)
+ 
+ 
+ 
+ 
+ 
