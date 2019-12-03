@@ -1,0 +1,22 @@
+
+
+
+List(("aaa",2),("bbb",3),("aaa",1)).
+ toDF("name","count").
+ groupBy("name").
+ agg(count("name").as("count"), sum("count").as("total") ).
+ show() 
+
+
+
+
+spark.table("kmdb.orders").
+ filter($"extract_date".gt(date_add(current_date,-7))).
+ groupBy("extract_date").
+ count().
+ orderBy($"extract_date".desc).
+ show()
+
+
+
+
