@@ -1,0 +1,25 @@
+
+//----- METHOD#1: GET max value first, then query using it
+val mx_extract_date = spark.table("kmdb.orders").agg(max("extract_date")).collect().head.getString(0)
+
+    var df_tef_mrch = spark.table("kmdb.orders").
+      filter($"extract_date" === lit(mx_extract_date)).
+      select($"i_mrchnt_id", $"col2")
+      
+
+      
+//----- METHOD#2: Direct query on column
+//--NOT GIVING CORRECT VALUES: Probably this gives latest partition in current data set at this mapper
+
+val win_extract_date = Window.partitionBy("extract_date")
+
+var mrchDF = spark.table("kmdb.orders").
+   filter($"extract_date".gt(date_add(current_date,-7))).
+   withColumn("max_extract_date", max($"extract_date").over(win_extract_date)).
+   filter($"extract_date" === $"max_extract_date").
+   select($"i_mrchnt_id", $"col2").
+   count()
+   
+   
+
+
