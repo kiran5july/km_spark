@@ -3,7 +3,7 @@
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
-val df = Seq(("a", 10), ("a", 10), ("a", 20)).toDF("col1", "col2")
+val df = Seq(("a", 10), ("a", 10), ("a", 20), ("b", 30)).toDF("col1", "col2")
 
 val windowSpec = Window.partitionBy("col1").orderBy("col2")
 
