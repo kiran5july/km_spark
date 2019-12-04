@@ -1,6 +1,21 @@
 
+//---example----
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
 
-//---- Objective: Get the top zip for every id
+val df = Seq(("a", 10), ("a", 10), ("a", 20)).toDF("col1", "col2")
+
+val windowSpec = Window.partitionBy("col1").orderBy("col2")
+
+df.withColumn("row_number", row_number().over(windowSpec)).
+  withColumn("rank", rank().over(windowSpec)).
+  withColumn("dense_rank", dense_rank().over(windowSpec)).
+  show()
+  
+  
+  
+
+//-------------- Objective: Get the top zip for every id  -------------------------
 //---- Get top rank() with more trans count & high amount by id and zip (due to mulitple txns by id)
 val rankSha = org.apache.spark.sql.expressions.Window.partitionBy("id").
   orderBy($"id", desc("tran_cnt"), desc("tran_amt") )
