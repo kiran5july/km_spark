@@ -1,0 +1,16 @@
+
+
+   var nDaysTxns=365;
+   var lowLimit=0
+   var upperLimit=30
+   
+   while(lowLimit < nDaysTxns) {
+     upperLimit = if(upperLimit>nDaysTxns) nDaysTxns else upperLimit;
+     println(lowLimit+" - "+upperLimit);
+
+     spark.table("kmdb.orders").
+      filter($"extract_date".lt(date_sub(current_date, lowLimit)) && $"extract_date".gt(date_sub(current_date, upperLimit)) ).
+      show(3)
+
+     lowLimit=upperLimit+1; upperLimit=upperLimit+30;
+   }
