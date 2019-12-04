@@ -1,0 +1,6 @@
+
+
+case class idVal(id: Long, value: String, flt: Double)
+val recDS = Seq( idVal(1, "A", 5.99), idVal(2, "B", 4.77) , idVal(3, "C", 3.44) ).toDS
+
+recDS.show()
