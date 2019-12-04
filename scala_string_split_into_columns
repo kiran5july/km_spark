@@ -1,0 +1,28 @@
+
+
+val dataDF=Seq(("a1","b1,b2"), ("a2", "b1,b2,b3")).toDF("A","B")
+
+
+
+//---Split a column into static columns
+dataDF.withColumn("B_arr", split($"B", ",")).withColumn("b_size", lit(size($"B_arr"))).
+  select( col("*") +: (0 until 3).map(i => col("B_arr").getItem(i).as(s"col_$i")): _*).
+  drop("B_arr").show()
+
+
+//---Split into static columns
+ dataDF.
+  withColumn("col_0", split($"B",",").getItem(0) ).
+  withColumn("col_1", split($"B",",").getItem(1) ).
+  withColumn("col_2", split($"B",",").getItem(2) ).
+  show()
+
+ dataDF.withColumn("B_arr", split($"B", ",")).
+  withColumn("b1", when(array_contains($"B_arr", "b1"), "b1").otherwise("")).
+  withColumn("b2", when(array_contains($"B_arr", "b2"), "b2").otherwise("")).
+  withColumn("b3", when(array_contains($"B_arr", "b3"), "b3").otherwise("")).
+  drop("B","B_arr").
+  show()
+  
+  
+  
