@@ -1,15 +1,43 @@
+--aggregate functions: count(), avg(), max(), min(), sum(), etc.
 
+//input
+val dataDF = List(("aaa",2),("bbb",3),("aaa",1)).toDF("name","count")
 
-
-List(("aaa",2),("bbb",3),("aaa",1)).
- toDF("name","count").
+//--Using agg()
+dataDF.
  groupBy("name").
- agg(count("name").as("count"), sum("count").as("total") ).
+ agg(count("name").as("name_count") ).
  show() 
 
 
+//--Using direct aggregate function: count()
+dataDF.
+ groupBy("name").
+ count().
+ orderBy($"count".desc).
+ show()
+=>Took 200 reducers ??
 
 
+//---Using Window
+val wId = org.apache.spark.sql.expressions.Window.partitionBy("name")
+dataDF.
+ withColumn("count", count("name").over(wId)).
+ show()
+ 
+=>This gives duplicates for group column, so use distinct
+=>FIX: dataDF.withColumn("count", count("name").over(wId)).distinct.show()
+
+
+
+
+//----- more aggregate functions in one call
+dataDF.
+ groupBy("name").
+ agg(count("name").as("count"), sum("count").as("total") ).
+ show() 
+ 
+//---- orders table by extract_date
 spark.table("kmdb.orders").
  filter($"extract_date".gt(date_add(current_date,-7))).
  groupBy("extract_date").
@@ -19,15 +47,5 @@ spark.table("kmdb.orders").
 
 
 
-//------------------avg-------------------
-//sample input
-val recDF = Seq( (1, 2), (1,4) , (2,5) , (2,3) ).toDF("id","value")
-
-//---- group & get avg
-recDF.groupBy("id").agg(avg("value")).show()
-
-//----- Window to retain other columns
-val wId = org.apache.spark.sql.expressions.Window.partitionBy("id")
-recDF.withColumn("avg", avg("value").over(wId)).show()
 
 
