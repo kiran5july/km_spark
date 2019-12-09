@@ -1,7 +1,7 @@
 --aggregate functions: count(), avg(), max(), min(), sum(), etc.
 
 //input
-val dataDF = List(("aaa",2),("bbb",3),("aaa",1)).toDF("name","count")
+val dataDF = List(("aaa",2),("bbb",3),("aaa",1)).toDF("name","val")
 
 //--Using agg()
 dataDF.
@@ -11,7 +11,7 @@ dataDF.
 
 
 //--Using direct aggregate function: count()
-dataDF.
+dataDF.repartition($"name").
  groupBy("name").
  count().
  orderBy($"count".desc).
@@ -21,25 +21,28 @@ dataDF.
 
 //---Using Window
 val wId = org.apache.spark.sql.expressions.Window.partitionBy("name")
-dataDF.
+dataDF.repartition($"name").
  withColumn("count", count("name").over(wId)).
  show()
- 
-=>This gives duplicates for group column, so use distinct
+
+dataDF.repartition($"name").
+ select($"name", $"val", count("name").over(wId).as("count") ).show()
+
+=>This gives duplicates for group column, so use distinct to get distinct grouped column
 =>FIX: dataDF.withColumn("count", count("name").over(wId)).distinct.show()
 
 
 
 
 //----- more aggregate functions in one call
-dataDF.
+dataDF.repartition($"name").
  groupBy("name").
- agg(count("name").as("count"), sum("count").as("total") ).
+ agg(count("name").as("count"), sum("val").as("total") ).
  show() 
  
 //---- orders table by extract_date
 spark.table("kmdb.orders").
- filter($"extract_date".gt(date_add(current_date,-7))).
+ filter($"extract_date".gt(date_add(current_date,-7))).repartition($"extract_date").
  groupBy("extract_date").
  count().
  orderBy($"extract_date".desc).
