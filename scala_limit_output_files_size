@@ -1,0 +1,24 @@
+
+
+
+//--------- Limit File size to 1MB
+spark.conf.set("spark.sql.files.maxPartitionBytes", 1024*1024*2)
+spark.conf.set("spark.sql.files.minPartitionBytes", 1024*1024*30)
+
+//Input data
+hdfs dfs -du -h /vivid/km/test_op_file_size/
+2.1 M  6.3 M  /vivid/km/test_op_file_size/part-00000-c10700ac-4bcb-4745-a2be-12af0987e766-c000.csv
+
+var df1 = spark.read.options(Map("header"->"true", "delimiter"->",")).csv("/vivid/km/test_op_file_size/")  //.show(2)
+
+spark.conf.set("spark.sql.files.maxPartitionBytes", 1024*1024*1)
+df1.write.csv("/vivid/km/test_op_file_size_1MB")
+hdfs dfs -du -h /vivid/km/test_op_file_size_1MB/
+1023.9 K  3.0 M    /vivid/km/test_op_file_size_1MB/part-00000-36f7d17b-ef7e-4b88-955c-c6d840ea0138-c000.csv
+1.0 M     3.0 M    /vivid/km/test_op_file_size_1MB/part-00001-36f7d17b-ef7e-4b88-955c-c6d840ea0138-c000.csv
+102.4 K   307.2 K  /vivid/km/test_op_file_size_1MB/part-00002-36f7d17b-ef7e-4b88-955c-c6d840ea0138-c000.csv
+
+//--------------------------------
+
+
+
