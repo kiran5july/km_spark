@@ -1,0 +1,26 @@
+
+
+
+
+
+-----Split data by range------------
+
+import org.apache.spark.ml.feature.Bucketizer
+
+val splits = List(Double.NegativeInfinity,0.0 ,1.0, 5.0, 10.0, 50.0, 100.0, Double.PositiveInfinity).toArray
+val scoresDF=Seq(55, 77, 4, 33, 11, 22, 88, 1,66, 9).toDF("scores")
+
+val bucketizer = new org.apache.spark.ml.feature.Bucketizer().
+    setInputCol("scores").
+    setOutputCol("scores_range_indx").
+    setSplits(splits)
+var scoresRanges=bucketizer.transform(scoresDF)
+
+var scoreRangeCount=scoresRanges.groupBy("scores_range_indx").count()
+
+scoreRangeCount.orderBy("scores_range_indx").show(false)
+
+--------
+
+
+
