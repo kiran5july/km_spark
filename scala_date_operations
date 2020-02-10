@@ -1,27 +1,42 @@
 
-//----- insert: date in yyyy--MM-dd
-df.select (...
-           ,lit(java.time.LocalDate.now.toString()).as("process_date")
-           ...).
- write.mode("overwrite").insertInto(sDBName+".mytable1");
 
-//------ insert: timestamp column -----------
+//---------------------date/datetime/timestamp ---------------------------------------------
+
+//----- read: 
+1) MM/dd/yy to timestamp (yyyy-MM-dd HH:mm:ss.S)
+withColumn("date_dt", unix_timestamp($"qdate", "MM/dd/yy").cast("timestamp"))
+==> 2018-06-08 00:00:00.0
+
+2) MM/dd/yy to different date format (yyyy-MM-dd)
+withColumn("date_dt", from_unixtime(unix_timestamp($"qdate", "MM/dd/yy"), "YYYY-MM-dd"))
+==> 2018-06-08
+
+
+//----- insert: current date/timestamp
+1) in yyyy-MM-dd
+df.withColumn("process_date", lit(java.time.LocalDate.now.toString()) ).
+  //write.mode("overwrite").insertInto(sDBName+".mytable1");
+
+2) in yyyy-MM-dd HH:mm:ss.SSS
 val proc_st_ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date())
-df.select(  ...
-         ,lit(proc_st_ts).as("process_ts")
-         ,lit(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date())).as("create_ts")
-         ...).
-         
- coalesce(1).write.insertInto(sDBName+".table")
+
+df.withColumn( "process_ts", lit(proc_st_ts) ).
+ //coalesce(1).write.insertInto(sDBName+".table")
  
  
  
- //------ query: timestamp column ------
- spark.table(sDBName+".csig_request").
-   filter($"process_ts">=date_add(current_date(),0)).
-  //filter(date_format($"process_ts", "yyyy-MM-dd") >= date_add(current_date(),-1) ).
+ //------ query: date column
+ 
+1) with current date
   filter($"process_date" >= java.time.LocalDate.now.toString() )
-  orderBy($"process_ts".desc)
+
+
+
+ //------ query: timestamp column
+    filter($"process_ts">=date_add(current_date(),0)).
+  //filter(date_format($"process_ts", "yyyy-MM-dd") >= date_add(current_date(),-1) ).
+  
+
   
   
   
