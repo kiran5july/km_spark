@@ -1,5 +1,9 @@
 
 
+val currentTime = System.currentTimeMillis()
+==> 1581300967704
+
+
 //---------------------date/datetime/timestamp ---------------------------------------------
 
 //----- read: 
@@ -10,6 +14,17 @@ withColumn("date_dt", unix_timestamp($"qdate", "MM/dd/yy").cast("timestamp"))
 2) MM/dd/yy to different date format (yyyy-MM-dd)
 withColumn("date_dt", from_unixtime(unix_timestamp($"qdate", "MM/dd/yy"), "YYYY-MM-dd"))
 ==> 2018-06-08
+
+3) long to timestamp 
+val linesDF = List(("1", 1525172806269L), ("2", 1525172797440L) ).toDF("Id", "time_ms")
+//linesDF.printSchema() => time_ms: long
+
+linesDF.withColumn("time_ms_dt", (($"time_ms"/1000).cast("timestamp")))
+==> 1525172806269L -> 2018-05-01 06:06:46.269
+==> 1525172797440L -> 2018-05-01 06:06:37.44
+
+linesDF.withColumn("time_ms_dt", (($"time_ms".cast("float")/1000).cast("timestamp")))
+==>2018-05-01 06:06:37.44
 
 
 //----- insert: current date/timestamp
