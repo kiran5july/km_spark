@@ -1,0 +1,19 @@
+
+
+
+//----substr-----
+
+List("1234567890").   //or List(("1234567890") ).
+ toDF("id").
+ withColumn("substr1", $"id".substr(1,3)).
+ withColumn("substr2", substring($"id",1,3)).
+ show()
+ 
+ 
+//---- substring length from another column 
+List(("1234567890", "4") ).toDF("id", "validchars").
+ withColumn("substr1", expr("substring(id, 1, validchars)") ).
+ show()
+ 
+ 
+ 
