@@ -27,7 +27,7 @@ extract_date=date.today().strftime('%Y-%m-%d')
 spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
 
 #Insert in table
-dfData.select('order_id', 'order_date', 'order_customer_id', 'order_status', F.lit(extract_date)).write.insertInto("kmdb.orders_prtn")
+dfData.select('order_id', 'order_date', 'order_customer_id', 'order_status', F.lit(extract_date)).write.insertInto("kmdb.orders_prtn", overwrite=True)
 
 #Validate
 spark.table("kmdb.orders_prtn") \
