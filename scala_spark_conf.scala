@@ -1,12 +1,22 @@
 
-
+//-------SparkSession------------
 val spark = SparkSession.builder
   .appName("KM App")
   .master("yarn")
   .enableHiveSupport()
   .getOrCreate()
-  
 
+
+val conf = new SparkConf()
+   .setMaster("local") //yarn
+   .setAppName("kmiry_Timed_Job")
+
+val spark = SparkSession.builder
+   .config(conf)
+   //.enableHiveSupport()
+   .getOrCreate
+
+//-----------------------------
 spark.conf.getAll.foreach(println)
 spark.sql("SET -v").show(200, truncate=false)
 spark.conf.getAll.toList
