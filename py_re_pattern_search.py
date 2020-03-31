@@ -14,22 +14,27 @@ dataMerged.show(10,False)
 |100032020-01-035.7  |
 +--------------------+
 
-String pattern matching methods:
+#String pattern matching methods:
 -findall() -> returns tuples
+#re.findall(rex, "100012020-01-0199.99")[0]
 -search() -> returns tuples
+#re.search(rex, "100012020-01-0199.99").groups()
+
+#Reg Expressions:
+rex=r'([\w\W]{5})([\w\W]{10})([\w\W]+)'
+rex=r'([0-9]{5})([0-9-]{10})([0-9.]+)'
+rex=r'([0-9]{5})([0-9]{4}-[0-9]{2}-[0-9]{2})([0-9.]+)'
 
 
 def breakString(s):
- rec=re.findall(r"([0-9]{5})([0-9-]{10})([0-9.]+)",s)[0]
+ rec=re.findall(rex,s)[0]
  return rec[0]+","+rec[1]+","+rec[2]
 
 #other way for function: findall() to get tuple, convert to list & join all elements by comma
 def breakString(s):
- return ( ','.join( list(re.findall(r"([0-9]{5})([0-9-]{10})([0-9.]+)", s)[0] ) )  )
+ return ( ','.join( list(re.findall(rex, s)[0] ) )  )
  
-#Can use search():
-#re.search(r"([0-9]{5})([0-9-]{10})([0-9.]+)", "100012020-01-0199.99").groups()
-#re.findall(r"([0-9]{5})([0-9]{4}-[0-9]{2}-[0-9]{2})([0-9.]+)", "100012020-01-0199.99")[0]
+
 
 udfRecMerged=F.udf(breakString, StringType())
 
