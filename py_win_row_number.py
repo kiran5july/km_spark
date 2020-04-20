@@ -26,7 +26,14 @@ winRecCount=Window.partitionBy("id").orderBy(F.col("rec_count").desc(), F.col("a
 
 df_data.withColumn("rownum", F.row_number().over(winRecCount) ).show()
 
-
++---+---+---------+------+------+
+| id|id2|rec_count|amount|rownum|
++---+---+---------+------+------+
+|  b| b1|       10|   102|     1|
+|  b| b1|        7|   100|     2|
+|  a| a1|       10|   300|     1|
+|  a| a2|       10|   200|     2|
++---+---+---------+------+------+
 
 
 
