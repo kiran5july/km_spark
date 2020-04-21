@@ -61,22 +61,33 @@ df_data.select("id", "rec_count"
 
 
 ----agg() with windowing on Multiple columns
-df_id_zip=spark.createDataFrame([("a", "a.1", 2, 10), ("a", "a.1", 2, 12), ("a", "a.2", 1, 6), ("a", "a.2", 3, 12), ("b", "b.1", 7, 11)]
+df_id_zip=spark.createDataFrame([("a", "a.1", 2, 10), ("a", "a.1", 1, 12), ("a", "a.2", 1, 6), ("a", "a.2", 3, 12), ("b", "b.1", 7, 11)]
   , ["id", "zip", "rec_count", "total"])
 
 #---agg using groupBy()
 df_id_zip.groupBy("id","zip").agg( F.sum("rec_count").alias("sum_rec_count"), F.sum("total").alias("sum_total") ).show()
-
++---+---+-------------+---------+
+| id|zip|sum_rec_count|sum_total|
++---+---+-------------+---------+
+|  b|b.1|            7|       11|
+|  a|a.1|            3|       22|
+|  a|a.2|            4|       18|
++---+---+-------------+---------+
 
 #---agg using Window()
+#used as replacement for group
 winIdZip=Window.partitionBy("id","zip")
-winMax=Window.partitionBy("id","zip").orderBy(F.col("sum_count").desc(), F.col("sum_total").desc())
+
+#I need single max record for each "id", so only one field in this window
+winMax=Window.partitionBy("id").orderBy(F.col("sum_count").desc(), F.col("sum_total").desc())
+
 df_id_zip.select("id","zip", "rec_count","total"
  , F.sum("rec_count").over(winIdZip).alias("sum_count")
  , F.sum("total").over(winIdZip).alias("sum_total")
-).select("id","zip", F.row_number().over(winMax).alias("row_num")
+).select("id","zip"
+ , F.row_number().over(winMax).alias("row_num")
  , F.max("sum_count").over(winMax).alias("sum_rec_count")
- , F.max("sum_total").over(winMax).alias("sum_total") ).filter(F.col("row_num")==1).drop("row_num").show()
+ , F.max("sum_total").over(winMax).alias("sum_total") ).show()
 
 +---+---+-------------+---------+
 | id|zip|sum_rec_count|sum_total|
