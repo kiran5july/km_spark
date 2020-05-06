@@ -17,7 +17,7 @@ kmdb.mrch_list_his
 sDBName="kmdb"
 
 spark.conf.set("spark.sql.sources.partitionColumnTypeInference.enabled", "false")
-=> Now we get the extract_date (YYYY-MM-DD) in StringType(), otherwise we get as Date object
+=> Now we get the extract_date (YYYY-MM-DD) in StringType(), otherwise it returns as:  datetime.date(2020, 5, 1)
 
 df_mrch_hist=spark.read.option("sep","|").csv("/data/mrch_list_hist") \
  .withColumnRenamed("_c0", "loc_id1") \
