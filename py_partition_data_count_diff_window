@@ -1,0 +1,57 @@
+
+#---summary data
+kmdb.mrch_list_his
++------------+---------+-------+
+|extract_date|rec_count|row_num|
++------------+---------+-------+
+|  2020-05-01|     1760|      1|
+|  2020-04-15|     1758|      2|
+|  2020-03-31|     1749|      3|
+|  2020-03-26|     1746|      4|
+|  2020-03-22|       38|      5|
+|  2020-03-01|     1603|      6|
+|  2020-02-17|     1540|      7|
++------------+---------+-------+
+
+
+sDBName="kmdb"
+
+spark.conf.set("spark.sql.sources.partitionColumnTypeInference.enabled", "false")
+=> Now we get the extract_date (YYYY-MM-DD) in StringType(), otherwise we get as Date object
+
+df_mrch_hist=spark.read.option("sep","|").csv("/data/mrch_list_hist") \
+ .withColumnRenamed("_c0", "loc_id1") \
+ .withColumnRenamed("_c1", "loc_id2") \
+ .withColumnRenamed("_c2", "wp_mid")
+
+df_mrch_hist=spark.table("{}.mrch_list_hist".format(sDBName))
+df_mrch_hist.cache()
+
+#Window by records count
+from pyspark.sql.window import Window
+winExtrDt=Window.orderBy(F.col("extract_date").desc())
+
+df_extr_dts=df_mrch_hist.groupBy("extract_date").agg(F.count(F.col("*")).alias("rec_count") ) \
+ .select("extract_date", "rec_count", F.row_number().over(winExtrDt).alias("row_num") )
+
+df_extr_dts.show()
+
+
+
+lst_extr_dts=df_extr_dts.collect()
+
+for itm in lst_extr_dts:
+ print(itm)
+
+dt_max=lst_extr_dts[0][0]
+total_max=lst_extr_dts[0][1]
+for i in range(len(lst_extr_dts)):
+ if lst_extr_dts[i][1]!=total_max:
+  break;
+
+print("Latest mrch count: {}".format(dt_max))
+=> Latest mrch count: 2020-05-01
+
+dt_2nd_max=lst_extr_dts[i][0]
+print("Next mrch count: {}".format(dt_2nd_max))
+=> Next mrch count: 2020-04-15
