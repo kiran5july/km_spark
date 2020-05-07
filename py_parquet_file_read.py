@@ -31,6 +31,7 @@ dataDF3.coalesce(1).write.mode('append').parquet("/km_hadoop/data/test_ext_parqu
 
 #Read all columns
 >>> spark.read.option("mergeSchema", "true").parquet("/km_hadoop/data/test_ext_parquet").show(10,False)
+
 +----+-----+----+----+
 |id2 |name2|id  |name|
 +----+-----+----+----+
@@ -41,6 +42,16 @@ dataDF3.coalesce(1).write.mode('append').parquet("/km_hadoop/data/test_ext_parqu
 |null|null |1   |aaa |
 |null|null |2   |bbb |
 +----+-----+----+----+
+
+#Or using schema
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, FloatType, DecimalType
+schemaCC=StructType([
+ StructField("id", StringType(), True),
+ StructField("name", StringType(), True),
+ StructField("id2", StringType(), True),
+ StructField("name2", StringType(), True)
+])
+spark.read.schema(schemaCC).parquet("/km_hadoop/data/test_ext_parquet").show(10,False)
 
 #Current Hive table doesn't show all data, so create new table with all column names.
 CREATE EXTERNAL TABLE kmdb.test_ext_parquet_all_columns (
