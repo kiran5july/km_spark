@@ -1,0 +1,10 @@
+
+
+
+#--------------read
+df=spark.read.option("sep","|").csv(sPath)
+df=spark.read.options(sep="|").csv(sPath)
+
+
+#-------------write
+df.write.csv(PATH, header=True, emptyValue='')
