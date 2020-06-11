@@ -8,3 +8,15 @@ df=spark.read.options(sep="|").csv(sPath)
 
 #-------------write
 df.write.csv(PATH, header=True, emptyValue='')
+
+
+Ex:
+
+from datetime import datetime, date, timedelta
+dt=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+
+dfData.coalesce(1).write.mode('overwrite').option('header', 'true').csv("/km/data/data_{}".format(dt), emptyValue='')
+
+#.option("sep","|")
+
+#.mode('append') #or overwrite
