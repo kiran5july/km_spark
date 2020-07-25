@@ -5,6 +5,15 @@
 df=spark.read.option("sep","|").csv(sPath)
 df=spark.read.options(sep="|").csv(sPath)
 
+#Read using schema
+schema = StructType(
+   [StructField('txn_dt', StringType(), True),
+    StructField('merchant_id', StringType(), True),
+    StructField('txn_count', IntegerType(), True),
+    StructField('txn_amt', DecimalType(), True)
+   ]
+)
+df_final=spark.read.option("sep","|").schema(schema).csv(sPath)
 
 #-------------write
 df.write.csv(PATH, header=True, emptyValue='')
@@ -17,6 +26,16 @@ dt=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
 
 dfData.coalesce(1).write.mode('overwrite').option('header', 'true').csv("/km/data/data_{}".format(dt), emptyValue='')
 
-#.option("sep","|")
 
+
+#--------------option/options--------------------
+.option("sep","|")
+.option('header', 'true')
+
+
+#options syntax: 
+#.option("sep"="|", "header"="true")
+
+
+#-------------mode-------------
 #.mode('append') #or overwrite
