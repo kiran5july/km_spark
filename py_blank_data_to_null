@@ -1,0 +1,37 @@
+
+
+
+import pyspark.sql.functions as F
+from pyspark.sql.types import IntegerType, StringType
+
+def blank_to_null(c):
+ return F.when(F.col(c)!="", F.col(c)).otherwise(None)
+
+#data
+df1 = spark.createDataFrame([("a", "aa"), ("b", None), ("c", "")], ["id", "name"])
+
+#---apply for each column
+df1.withColumn("name", blank_to_null("name") ).show()
++---+----+
+| id|name|
++---+----+
+|  a|  aa|
+|  b|null|
+|  c|null|
++---+----+
+
+
+#---multiple columns at once
+blank_columns = set(["name"])
+	
+df1_null_row = [ blank_to_null(c).alias(c) if c in blank_columns else c for c in df1.columns]
+df1.select(*df1_null_row).show()
++---+----+
+| id|name|
++---+----+
+|  a|  aa|
+|  b|null|
+|  c|null|
++---+----+
+
+
