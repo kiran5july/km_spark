@@ -1,0 +1,58 @@
+
+
+
+--create table km.km_nulls_1(id string, name string);
+df_data = spark.createDataFrame([("c", None), ("d", "")], ["id", "name"])
+
+import pyspark.sql.functions as F
+
+---Null(None) to blank
+def null_to_blank(c):
+ return F.when(F.col(c).isNull(), F.lit('')).otherwise(F.col(c))
+
+null_columns = set(['name'])
+df_null_to_blank = [ null_to_blank(c).alias(c) if c in null_columns else c for c in df_data.columns]
+df_data_blanks = df_data.select(*df_null_to_blank)
+df_data_blanks.show()
++---+----+
+| id|name|
++---+----+
+|  c|    |
+|  d|    |
++---+----+
+
+df_data_blanks.write.insertInto("km.km_nulls_1")
+SELECT * FROM km.km_nulls_1;
++----------------+------------------+--+
+| km_nulls_1.id  | km_nulls_1.name  |
++----------------+------------------+--+
+| c              |                  |
+| d              |                  |
++----------------+------------------+--+
+
+
+---blank to Null(None)
+def blank_to_null(c):
+ return F.when(F.col(c)!="", F.col(c)).otherwise(None)
+
+blank_columns = set(["name"])
+df_blank_to_null = [ blank_to_null(c).alias(c) if c in blank_columns else c for c in df_data.columns]
+
+df_data_nulls = df_data.select(*df_blank_to_null)
+df_data_nulls.show()
++---+----+
+| id|name|
++---+----+
+|  c|null|
+|  d|null|
++---+----+
+
+df_data_nulls.write.insertInto("km.km_nulls_1")
+SELECT * FROM km.km_nulls_1;
++----------------+------------------+--+
+| km_nulls_1.id  | km_nulls_1.name  |
++----------------+------------------+--+
+| c              | NULL             |
+| d              | NULL             |
++----------------+------------------+--+
+
