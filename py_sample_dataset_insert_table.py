@@ -32,3 +32,17 @@ def get_counted_sample(df, row_count, withReplacement=False, seed=113170):
 #Method call
 dfNewMids = get_counted_sample(dfMrch, 35000, False, 111)
 
+
+
+#--- manual sample
+#--Logic: Add row_number() to each record & pull specific number of records
+#1: Using row_number(window)
+from pyspark.sql.window import Window
+winRN = Window.orderBy(F.monotonically_increasing_id())
+
+dfMrch.withColumn("rn", F.row_number().over(winRN) ).filter(F.col("rn")<=35000).select('merchant_id','customer_mcc').count()
+
+ERROR: WARN window.WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+
+#2: Using rdd's zipWithIndex()
+dfMrch.rdd.zipWithIndex().map(lambda x: (x[0][0], x[0][1], x[1]+1)).toDF(df_data.columns+["rn"]).select('merchant_id','customer_mcc').show(5)
