@@ -32,6 +32,7 @@ dfData.coalesce(1).write.mode('overwrite').option('header', 'true').csv("/km/dat
 .option("sep","|")
 .option('header', 'true')
 
+.options(sep='|', header='true', quoteAll='true')
 
 #options syntax: 
 #.option("sep"="|", "header"="true")
