@@ -8,22 +8,23 @@ from pyspark.sql.window import Window
 
 print("Input arguments:", sys.argv)
 #Check arguments
-if (len(sys.argv) != 3):
- print "Incorrect number of input arguments: Expected 2"
+if (len(sys.argv) != 4):
+ print "Incorrect number of input arguments: Expected 3"
  print "1: db name (data_comm/vivid)"
- print "2: complaince retain period (numeric)"
+ print "2: complaince retain period (Number)"
+ print "3: iteration count (Number)"
  sys.exit(1)
 
 sDBName = sys.argv[1]
 iComplRetainPeriod = int(sys.argv[2])
-iIncrements = 15000
+iIncrements = int(sys.argv[3])
 
 
 def getDT():
  return datetime.now().strftime( '%Y-%m-%d %H:%M:%S')
 
 print("{}:----- Arguments ----------".format(getDT()))
-print("1: {}\n2: {}".format(sDBName,iComplRetainPeriod) )
+print("1: {}\n2: {}\n3: {}".format(sDBName, iComplRetainPeriod, iIncrements) )
 
 print("{}: getting spark session..".format(getDT()))
 
@@ -81,7 +82,7 @@ if len(lst_chns)<=0:
  print("{}:---> Red merchants list is blank, please check.".format(getDT()))
  sys.exit(0)
 
-print("{}:     -----> Red Chains count: {}".format(getDT(), len(lst_chns)) )
+print("{}:     -----> {}".format(getDT(), len(lst_chns)) )
 b_lst_chns = spark.sparkContext.broadcast(lst_chns)
 
 print("{}:----- Get Non red (peer)-----".format(getDT()) )
@@ -92,7 +93,7 @@ df_mid_red_excl_lat_lon.cache()
 
 print("{}:----- payments.stlmnt_dly -----".format(getDT()) )
 df_mrch_tran = spark.table("payments.stlmnt_dly") \
- .filter(~F.col("chain_code").isin(b_lst_chns.value) & F.col("process_date").between( int((date.today()-timedelta(days=377)).strftime('%Y%m%d')) , int((date.today()-timedelta(days=12)).strftime('%Y%m%d')) ) ) \
+ .filter(~F.col("chain_code").isin(b_lst_chns.value) & F.col("process_date").between( int((date.today()-timedelta(days=366)).strftime('%Y%m%d')) , int((date.today()-timedelta(days=1)).strftime('%Y%m%d')) ) ) \
  .select('merchant_id', F.trim(F.col('mcc')).alias('mcc'), 'sales_amt', 'wic_sales_amt', 'ebt_sales_amt', 'sales_cnt').repartition('merchant_id', 'mcc') \
  .groupBy('merchant_id', 'mcc').agg(F.sum(F.col('sales_amt')+F.col('wic_sales_amt')+F.col('ebt_sales_amt')).alias('sales'), F.sum('sales_cnt').alias('sales_cnt')) \
  .withColumnRenamed('merchant_id', 'comp_mid')
