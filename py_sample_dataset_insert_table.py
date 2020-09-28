@@ -5,16 +5,18 @@ CREATE EXTERNAL TABLE kmdb.tbl2
  LIKE kmdb.tbl2
  LOCATION '/kmdb/tbl2';
 
---Get sample data from kmdb.tbl1 and copy into vivid.tac_random_mids
+--Get sample data from kmdb.tbl1 and copy into kmdb.tbl2
 import pyspark.sql.functions as F
 dfMrch = spark.table("kmdb.tbl1") \
  .filter((F.col("merchant_id").isNotNull()) & (F.trim(F.col("merchant_id"))!="") & (F.col("customer_level")=='MT') & (F.col("portfolio")!='ECOM') ) \
  .select("merchant_id","customer_mcc")
 dfMrch.cache()
 
-dfNewMids = (dfMrch.sample(withReplacement=False, fraction=(1.08*float(35000)/dfMrch.count()), seed=111).limit(35000) )
+#Directly insert
+dfNewMids = dfMrch.sample(withReplacement=False, fraction=(1.08*float(35000)/dfMrch.count()), seed=111).limit(35000)
 dfNewMids.select('merchant_id','customer_mcc') \
- .write.mode('overwrite').insertInto("kmdb.tbl2", overwrite=True )
+ .write.insertInto("kmdb.tbl2", overwrite=True )
+
 
 #Using a function
 def get_counted_sample(df, row_count, withReplacement=False, seed=113170):
