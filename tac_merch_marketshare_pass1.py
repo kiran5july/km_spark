@@ -7,18 +7,20 @@ import os, sys, traceback, subprocess
 
 print("Input arguments:", sys.argv)
 #Check arguments
-if (len(sys.argv) != 2):
+if (len(sys.argv) != 3):
  print "Incorrect number of input arguments: Expected 2"
  print "1: db name (data_comm/vivid)"
+ print "2: extract_date for history table (Ex: 2020-09-15_17_13_54)"
  sys.exit(1)
 
 sDBName = sys.argv[1]
+s_ext_dt_hist = sys.argv[2]
 
 def getDT():
  return datetime.now().strftime( '%Y-%m-%d %H:%M:%S')
 
 print("{}:----- Arguments ----------".format(getDT()))
-print("1: {}".format(sDBName) )
+print("1: {}\n2: {}".format(sDBName, s_ext_dt_hist) )
 
 print("{}: getting spark session..".format(getDT()))
 
@@ -32,7 +34,7 @@ spark = SparkSession \
 spark.sparkContext.setLogLevel("ERROR")
 
 #.config("yarn.nodemanager.vmem-check-enabled", False) --- Giving error
-#spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
 #spark.conf.set(spark.yarn.executor.memoryOverhead","4096")
 spark.conf.set("spark.sql.sources.partitionColumnTypeInference.enabled", "false")
 #spark.conf.set("spark.sql.parquet.mergeSchema", "false")
@@ -104,9 +106,13 @@ df_ms_final = df_ms_peer_cnt.join(df_ms_mktshare, ['mid','mcc'] ) \
     ,'ms_55','ms_60','ms_65','ms_70','ms_75','ms_80','ms_85','ms_90','ms_95','ms_100'
  )
 
+df_ms_final.cache()
 
 print("{}:----- Write to {}.truspnd_trade_area_compl_mid_agg -----".format(getDT(), sDBName))
 df_ms_final.write.insertInto("{}.truspnd_trade_area_compl_mid_agg".format(sDBName), overwrite=True )
+
+print("{}:----- Write to {}.truspnd_trade_area_compl_mid_agg_hist".format(getDT(), sDBName))
+df_ms_final.withColumn('extract_date', F.lit(s_ext_dt_hist)).write.insertInto("{}.truspnd_trade_area_compl_mid_agg_hist".format(sDBName), overwrite=True )
 
 print("{}:----- COMPLETE -----".format(getDT()) )
 
