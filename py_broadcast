@@ -1,27 +1,28 @@
 
-#---source dataframe
+
+#------broadcast DataFrame
+
+#source dataframe
 df_new_merch=spark.table("{}.gtup_mrch_list_dup_fixed".format(sDBName)) \
  .select(F.col("wp_mid").alias("i_mrchnt"), "gtup_loc_id1")
 
-df_new_merch.cache()
+#df_new_merch.cache()
 
-#---Get into List
-lst_merchants=df_new_merch.select("i_mrchnt").rdd.flatMap(lambda x: x).collect()
-
-
-
-#------broadcast DataFrame
 F.broadcast(df_new_merch)
 
 #--use
-df.repartition("i_mrchnt").join(F.broadcast(df_new_merch), ["i_mrchnt"])
+df.repartition("i_mrchnt") \
+ .join(F.broadcast(df_new_merch), ["i_mrchnt"])
 
 
 
 
-#-------broadcast python list
+#-------broadcast python list (or any variable)
+#Get DF into List
+lst_merchants=df_new_merch.select("i_mrchnt").rdd.flatMap(lambda x: x).collect()
+
 b_lst_merchants=spark.sparkContext.broadcast(lst_merchants)
 
-#---use
-df.filter( F.col("i_mrchnt").isin(b_lst_merchants.value)     )
+#--use
+df.filter( F.col("i_mrchnt").isin(b_lst_merchants.value) )
 
