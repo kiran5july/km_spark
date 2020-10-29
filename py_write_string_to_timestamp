@@ -1,0 +1,34 @@
+
+beeline_url="..."
+beeline --silent -u "${beeline_url}" -e """
+DROP TABLE IF EXISTS kmdb.km_timestamp;
+CREATE EXTERNAL TABLE kmdb.km_timestamp (dt STRING, ts TIMESTAMP)
+STORED AS PARQUET
+LOCATION '/kmdb/common/km_timestamp';
+MSCK REPAIR TABLE kmdb.km_timestamp;
+"""
+impalad="..."
+impala-shell --ssl -i ${impalad} --quiet -q "INVALIDATE METADATA kmdb.km_timestamp; REFRESH kmdb.km_timestamp; set request_pool=general; SELECT * FROM kmdb.km_timestamp;"
+
+#----insert using Spark
+spark.sql("REFRESH kmdb.km_timestamp")
+from pyspark.sql.types import StringType
+import pyspark.sql.functions as F
+
+df1 = spark.createDataFrame([("2020-10-29"), ("2020-10-01")], StringType()).toDF("dt")
+df1.withColumn("ts", F.to_timestamp(F.col("dt"), 'yyyy-MM-dd')).write.insertInto("kmdb.km_timestamp")
+spark.table("kmdb.km_timestamp").show(5)
+
+df2 = spark.createDataFrame([("2020-09-01"), ("2020-09-02")], StringType()).toDF("dt")
+df2.withColumn("ts", F.to_timestamp(F.concat(F.col("dt"),F.lit(' 00:00:00')), 'yyyy-MM-dd HH:mm:ss')).write.insertInto("kmdb.km_timestamp")
+spark.table("kmdb.km_timestamp").show(5)
+
+df3 = spark.createDataFrame([("2020-09-10 08:33:33"), ("2020-09-11 14:44:44")], StringType()).toDF("dt")
+df3.withColumn("ts", F.to_timestamp(F.col("dt"), 'yyyy-MM-dd HH:mm:ss')).write.insertInto("kmdb.km_timestamp")
+spark.table("kmdb.km_timestamp").show(5)
+
+
+#---Refresh & see the result
+beeline -u "${beeline_url}" --silent -e "MSCK REPAIR TABLE kmdb.km_timestamp; SELECT * FROM kmdb.km_timestamp;"
+impala-shell --ssl -i ${impalad} --quiet -q "INVALIDATE METADATA kmdb.km_timestamp; REFRESH kmdb.km_timestamp; set request_pool=general; SELECT * FROM kmdb.km_timestamp;"
+
