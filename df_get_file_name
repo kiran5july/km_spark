@@ -1,0 +1,24 @@
+
+#---- Scala
+import org.apache.spark.sql.functions.input_file_name
+df.withColumn("filename", input_file_name)
+
+#---- Pyspark
+from pyspark.sql.functions import input_file_name
+df.withColumn("filename", input_file_name())
+
+
+
+#---- Scala: Get filename manually
+var inputHDFSPath ="/hdfs/path"
+def funFileName: ((String) => String) = { (s) =>(s.split("/").last)}
+
+import org.apache.spark.sql.functions.udf
+val udfFileName = udf(funFileName)
+
+var df_data=spark.read.
+ options(Map("delimiter"->"|", "header"->"true", "quoteAll"->"True")).
+ csv(inputHDFSPath+ "/*.gz").
+ toDF("col1").
+ withColumn("file_name", udfFileName(input_file_name()))
+
