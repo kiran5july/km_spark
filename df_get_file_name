@@ -3,9 +3,18 @@
 import org.apache.spark.sql.functions.input_file_name
 df.withColumn("filename", input_file_name)
 
+
 #---- Pyspark
 from pyspark.sql.functions import input_file_name
 df.withColumn("filename", input_file_name())
+=> This gives full file path
+
+#--Use regexp_extract to get just file name (with no path)
+from pyspark.sql.functions import regexp_extract
+#or: import pyspark.sql.functions as k
+regex_str=".*/([^\/]+)$"
+df.withColumn("filename", k.regexp_extract(k.input_file_name(),regex_str,1)
+
 
 
 
