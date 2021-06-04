@@ -16,8 +16,9 @@ regex_str=".*/([^\/]+)$"
 df = df.withColumn("filename", k.regexp_extract(k.input_file_name(),regex_str,1))
 
 #--Record count by file name
-df.groupBy('filename').agg(k.count('*').alias('count')).filter(k.col('count')<200000).show(5,False)
-
+df_rec_cnts = df.groupBy('filename').agg(k.count('*').alias('count'))
+df_rec_cnts.filter(k.col('count')<200000).show(5,False)
+df_rec_cnts.orderBy(k.col('count').desc()).show(5,False)
 
 #---- Scala: Get filename manually
 var inputHDFSPath ="/hdfs/path"
