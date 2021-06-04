@@ -26,11 +26,13 @@ dt=datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
 
 dfData.coalesce(1).write.mode('overwrite').option('header', 'true').csv("/km/data/data_{}".format(dt), emptyValue='')
 
+dfData.coalesce(1 if iRecordsCount/5000000<=0 else iRecordsCount/5000000).write.mode('overwrite').csv()
 
 
 #--------------option/options--------------------
 .option("sep","|")
 .option('header', 'true')
+.option("compression", "gzip")  -->none/snappy/gzip
 
 .options(sep='|', header='true', quoteAll='true')
 
