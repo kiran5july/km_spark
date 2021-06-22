@@ -18,5 +18,8 @@ df_tblColumns.subtract(df_parquetColumns).show(200,False)
 
 
 #----- look up or matching for a string in columns
+
+[i for i in spark.read.parquet('/km/data/').columns if 'tran' in i]
+
 [i for i in lst if lstColumns.find('order')>=0]
 
