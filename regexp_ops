@@ -1,5 +1,33 @@
 
 
+
+
+
+
+
+-----------------Scenarios--------------------
+#PySpark/Python
+#Load data with file name & extract file name from full path
+
+import pyspark.sql.functions as O
+from pyspark.sql.functions import input_file_name,countDistinct,regexp_extract
+
+regex_str_filename=r".*/([^\/]+)$"
+
+df_hist = spark.read.options(sep=',', header='False').csv('/km/datapath/') \
+ .toDF('col1','col2') \
+ .withColumn('full_file', O.input_file_name()) \
+ .withColumn('filename', O.regexp_extract(O.input_file_name(),regex_str_filename,1) )
+
++-----+----+-----------------------+----------+
+|col1 |col2|full_file              |filename  |
++-----+----+-----------------------+----------+
+|11111|abcd|/km/datapath/file01.txt|file01.txt|
+|22222|dbcd|/km/datapath/file02.txt|file01.txt|
++-----+----+-----------------------+----------+
+
+
+#Scala
 var tblName="km.table1"
 val filterOutWords = Set("INC", "LLC", "A")
 
