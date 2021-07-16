@@ -1,8 +1,19 @@
 
 
+#Pyspark/Python
+from pyspark.sql.types import StringType
+data = spark.createDataFrame(["aaaa_12345_xx", "bbbbb_123_yy", "ccc_0123_zzzz", "ddddd_234_zxzxzx"], StringType()).toDF("name")
+data.cache()
 
-
-
+data.withColumn('num', O.regexp_extract(O.col('name'), r"[a-zA-Z_]+([0-9]*)\w+$", 1)).show(5)
++----------------+-----+
+|            name|  num|
++----------------+-----+
+|   aaaa_12345_xx|12345|
+|    bbbbb_123_yy|  123|
+|   ccc_0123_zzzz| 0123|
+|ddddd_234_zxzxzx|  234|
++----------------+-----+
 
 
 -----------------Scenarios--------------------
