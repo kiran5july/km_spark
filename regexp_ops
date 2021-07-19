@@ -25,13 +25,12 @@ from pyspark.sql.functions import input_file_name,countDistinct,regexp_extract
 
 regex_str_filename=r".*/([^\/]+)$"
 
-df_hist = spark.read.options(sep=',', header='False').csv('/km/datapath/') \
- .toDF('col1','col2') \
- .withColumn('full_file', O.input_file_name()) \
- .withColumn('filename', O.regexp_extract(O.input_file_name(),regex_str_filename,1) )
+df_hist = spark.read.options(sep=',', header='False').csv('/km/datapath/').withColumn('file', O.input_file_name()) \
+ .toDF('col1','col2','full_file') \
+ .withColumn('filename', O.regexp_extract(O.col('file'),regex_str_filename,1) )
 
 +-----+----+-----------------------+----------+
-|col1 |col2|full_file              |filename  |
+|col1 |col2|file                   |filename  |
 +-----+----+-----------------------+----------+
 |11111|abcd|/km/datapath/file01.txt|file01.txt|
 |22222|dbcd|/km/datapath/file02.txt|file01.txt|
