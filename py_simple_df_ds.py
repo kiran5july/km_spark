@@ -17,3 +17,8 @@ spark.createDataFrame([("111")], StringType()) \
 
 
 
+#Get column names from a list object (from different table)
+cols = spark.table('kmdb.table').columns
+spark.read.option("sep","|").csv('/km/data/').toDF(*cols).show(5)
+
+
