@@ -28,6 +28,14 @@ dfData.coalesce(1).write.mode('overwrite').option('header', 'true').csv("/km/dat
 
 dfData.coalesce(1 if iRecordsCount/5000000<=0 else iRecordsCount/5000000).write.mode('overwrite').csv()
 
+#to hive table
+dfData.coalesce(1).write.insertInto("kmdb.mrch", overwrite=True )
+
+#partitioned Hive table
+from datetime import datetime, date, timedelta
+dt_created = datetime.now().strftime('%Y-%m-%d_%H%M')
+df_mrch_final = df_mrch.withColumn('extract_date', F.lit(dt_created))
+df_mrch_final.coalesce(2).write.insertInto("kmdb.mrch_hist", overwrite=True )
 
 #--------------option/options--------------------
 .option("sep","|")
