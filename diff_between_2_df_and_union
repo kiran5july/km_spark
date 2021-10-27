@@ -1,0 +1,39 @@
+
+
+----------diff between 2 dataframes & combine them---------------------------
+import pyspark.sql.functions as O
+
+----#1: df with single column
+from pyspark.sql.types import StringType
+df1_1col = spark.createDataFrame([("a"), ("a"), ("c")], StringType()).toDF("mid")
+df2_1col = spark.createDataFrame([("c"), ("d")], StringType()).toDF("mid")
+
+#using df
+df2_new = df2_1col.subtract(df1_1col)
+df_combined = df1_1col.union(df2_new)
+
+#using list
+list_df1 = df1_1col.dropDuplicates().rdd.flatMap(lambda x: x).collect()
+list_df2 = df2_1col.dropDuplicates().rdd.flatMap(lambda x: x).collect()
+
+list_new = list(set(list_df2) - set(list_df1))
+
+df_new = df2_1col.filter(O.col('mid').isin(list_new) )
+df_combined = df1_1col.union( df_new )
+
+
+----#2: df by 2 columns
+df1_2col = spark.createDataFrame([("aa", "a"), ("aa", "a2"), ("bb", "b")], ["loc_id", "mid"])
+df2_2col = spark.createDataFrame([("aa", "a2"), ("cc", "c1")], ["loc_id", "mid"])
+
+df1_2col2 = df1_2col.select("*", O.concat_ws("|",O.col("loc_id"),O.col("mid")).alias('loc_id_mid') )
+list_df1 = df1_2col2.select('loc_id_mid').dropDuplicates().rdd.flatMap(lambda x: x).collect()
+
+df2_2col2 = df2_2col.select("*", O.concat_ws("|",O.col("loc_id"), O.col("mid")).alias('loc_id_mid') )
+list_df2 = df2_2col2.select('loc_id_mid').dropDuplicates().rdd.flatMap(lambda x: x).collect()
+
+list_new = list(set(list_df2) - set(list_df1))
+df_new = df2_2col2.filter(O.col('loc_id_mid').isin(list_new) )
+df_combined = df1_2col2.union( df_new ).drop('loc_id_mid')
+
+-----------
