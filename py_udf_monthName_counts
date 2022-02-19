@@ -1,0 +1,56 @@
+
+'''
+UDF to return the month name from Month# input.
+
+Input:
++----------+-----------+
+|      DATE|ACTION_TYPE|
++----------+-----------+
+|2020-01-02|     DEFECT|
+|2020-01-04|     REWIRE|
+|2020-02-03|     DEFECT|
+|2020-03-05|       FILM|
++----------+-----------+
+
+Output:
++----------+------+
+|month_name|counts|
++----------+------+
+|       FEB|     1|
+|       JAN|     2|
+|       MAR|     1|
++----------+------+
+
+'''
+
+from pyspark.sql.types import LongType, StringType
+from pyspark.sql import functions as F
+
+def getMonthName(smonth):
+ monthName={
+  '01':'JAN',
+  '02':'FEB',
+  '03':'MAR'
+ }
+ return monthName.get(smonth, "INVALID")
+
+
+#spark.udf.register("getMonth2", getMonthName, StringType())
+getMonth=F.udf(getMonthName, StringType())
+
+df_actions = spark.createDataFrame([("2020-01-02", "DEFECT"), ("2020-01-04", "REWIRE"), ("2020-02-03", "DEFECT"), ("2020-03-05", "FILM")]) \
+ .toDF("DATE", "ACTION_TYPE")
+
+df_actions.show()
+
+df_actions.withColumn("month_name", getMonth(F.substring(F.col("DATE"), 6,2)))\
+ .groupBy("month_name").agg(F.count("*").alias("counts")).show()
+
+
++----------+------+                                      
+|month_name|counts|
++----------+------+
+|       FEB|     1|
+|       JAN|     2|
+|       MAR|     1|
++----------+------+
