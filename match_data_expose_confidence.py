@@ -161,7 +161,7 @@ df_ds2_6 = df_ds2_5 \
  .withColumn("address_std", F.regexp_replace("address_std", " west ", " w "))
 
 
-#df_ds1_6.registerTempTable("infinite_banking_data_final")
+#df_ds1_6.registerTempTable("xxx")
 #df_ds1_6.cache()
 #df_ds2_6.cache()
 
