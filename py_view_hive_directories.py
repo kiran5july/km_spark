@@ -27,9 +27,9 @@ s_db_name = sys.argv[1]
 s_table_name = sys.argv[2]
 s_path_save = sys.argv[3]
 
-#s_db_name = "vivid"
+#s_db_name = "kmdb"
 #s_table_name = ""
-#s_path_save = "/vivid/km/"
+#s_path_save = "/hdfs/km/"
 
 
 s_datetime_for_temp_staging = datetime.now().strftime( '%Y_%m_%d_%H_%M')
