@@ -158,7 +158,7 @@ df_mlxp.cache()
 print("BANK count: " + str(df_bank.count()) )
 print("MLXP count: " + str(df_mlxp.count()) )
 
-while(loop_end <= total_mrch):
+while(loop_start <= total_mrch):
     print(getDT()+": Batch: " + str(loop_start) + " -> " + str(loop_end))
     df_bank_batch = df_bank.filter(F.col('row_number').between(loop_start, loop_end))
     #df_bank_batch.cache()
