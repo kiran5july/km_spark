@@ -5,6 +5,23 @@ from pyspark.sql.window import Window
 df_data=spark.createDataFrame([("a", 10), ("b", 10), ("b", 7), ("a", 16), ("a", 20)], ["id", "rec_count"])
 
 #---simple row_number()
+#NOTE: ordering is MUST; if not, gives pyspark.sql.utils.AnalysisException: u'Window function row_number() requires window to be ordered, please add ORDER BY clause. For example SELECT row_number()(value_expr) OVER (PARTITION BY window_partition ORDER BY window_ordering) from table;'
+
+w_rn = Window.orderBy(O.col("id") )
+
+df_data.withColumn("rownum", O.row_number().over(w_rn)).show(5,False)
++---+---------+------+
+|id |rec_count|rownum|
++---+---------+------+
+|a  |16       |1     |
+|a  |20       |2     |
+|a  |10       |3     |
+|b  |7        |4     |
+|b  |10       |5     |
++---+---------+------+
+
+
+#---add partitionby column & order by record count
 from pyspark.sql.window import Window
 winRecCount=Window.partitionBy("id").orderBy(F.col("rec_count").desc())
 df_data.withColumn("rownum", F.row_number().over(winRecCount) ).show()
