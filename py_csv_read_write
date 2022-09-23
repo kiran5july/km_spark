@@ -49,4 +49,9 @@ df_mrch_final.coalesce(2).write.insertInto("kmdb.mrch_hist", overwrite=True )
 
 
 #-------------mode-------------
-#.mode('append') #or overwrite
+df.write.mode('append').options(sep='|', header='true', quoteAll='false').csv(output_path_matches, emptyValue='')
+
+#append: adds data to existing directory
+#overwrite: creates if the directory doesn't exist
+
+
