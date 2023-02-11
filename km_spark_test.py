@@ -121,4 +121,9 @@ else:
 
 #b_lst_chns.destroy()
 
+#caching
+import pyspark
+#df.persist(pyspark.StorageLevel.MEMORY_AND_DISK)
+#df.cache()
+
 print("{}----- COMPLETED -----".format(getDT()))
