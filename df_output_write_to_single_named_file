@@ -1,0 +1,41 @@
+
+#write dataframe to path
+df.write.csv('/vivid/km/write_test_py/')
+
+
+
+#-----pyspark
+import os
+os.system('hdfs dfs -ls -t /vivid/km/write_test_py/')
+
+os.system('hdfs dfs -cat /vivid/km/write_test_py/*.csv > /tmp/write_test_py.csv')
+from datetime import datetime
+dt_file_name = datetime.now().strftime( '%Y_%m_%d_%H_%M_%S' )
+os.system('hdfs dfs -cat /vivid/km/write_test_py/*.csv > /tmp/write_test_py_'+dt_file_name+'.csv')
+
+os.system('hdfs dfs -put -f /tmp/write_test_py_'+dt_file_name+'.csv /vivid/km/')
+
+os.system('hdfs dfs -ls -t /vivid/km/ | head -5')
+
+
+
+
+//-------------------------scala
+import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
+
+// Copy the actual file from Directory and Renames to custom name
+val hadoopConfig = new Configuration()
+val hdfs = FileSystem.get(hadoopConfig)
+
+val srcPath=new Path("c:/tmp/address")
+val destPath= new Path("c:/tmp/address_merged.csv")
+val srcFile=FileUtil.listFiles(new File("/tmp/address"))
+           .filterNot(f=>f.getPath.endsWith(".csv"))(0)
+//Copy the CSV file outside of Directory and rename 
+FileUtil.copy(srcFile,hdfs,destPath,true,hadoopConfig)
+//Removes CRC File that create from above statement
+hdfs.delete(new Path(".address_merged.csv.crc"),true)
+//Remove Directory created by df.write()
+hdfs.delete(srcPath,true)
+
+
