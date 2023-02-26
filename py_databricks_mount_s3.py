@@ -2,6 +2,10 @@
 access_key = "xx"
 secret_access_key = "yy"
 
+#access_key = dbutils.secrets.get(scope = "aws", key = "xx")
+#secret_access_key = dbutils.secrets.get(scope = "aws", key = "yy")
+
+
 encoded_secret_key = secret_access_key.replace("/", "%2F")
 aws_bucket_name = "abc"
 mount_name = "/mnt/km_s3_mount"
