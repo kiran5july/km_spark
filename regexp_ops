@@ -1,10 +1,11 @@
 
 
-#replace specific special characters in all (or more than one) columns
+#replace specific special characters in all (or more than one) column NAMES (NOT actual data)
 import re
-cols_to_replace = [ i for i in df.columns if i in ['lastname', 'firstname'] ]
+cols_to_replace = [ i for i in df.columns if i in ['last name', 'first name'] ]
 df = df.select([F.col(col).alias(re.sub("[^0-9a-zA-Z$]+", "", col)) for col in cols_to_replace])
-
+df.columns
+=> 'lastname', 'firstname'
 
 
 #Pyspark/Python
