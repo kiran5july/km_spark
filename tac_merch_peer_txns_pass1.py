@@ -10,7 +10,7 @@ print("Input arguments:", sys.argv)
 #Check arguments
 if (len(sys.argv) != 4):
  print "Incorrect number of input arguments: Expected 3"
- print "1: db name (data_comm/vivid)"
+ print "1: db name (kmdb)"
  print "2: complaince retain period (Number)"
  print "3: iteration count (Number)"
  sys.exit(1)
@@ -31,7 +31,7 @@ print("{}: getting spark session..".format(getDT()))
 spark = SparkSession \
  .builder \
  .enableHiveSupport() \
- .appName("KM TAC Merchant Peer Transactions Pass1 Job PySpark") \
+ .appName("KM TAC Merch Peer Transactions Pass1 Job PySpark") \
  .config("spark.executor.memoryOverhead", "4096") \
  .getOrCreate()
 
@@ -48,7 +48,7 @@ spark.conf.set("spark.sql.shuffle.partitions", "25")
 
 
 print("{}:----- {}.trade_area_compl_mid_compl -----".format(getDT(), sDBName) )
-df_mrch_to_process = spark.table(sDBName + ".trade_area_compl_mid_compl") \
+df_mrch_to_process = spark.table(sDBName + ".tac_mid_compl") \
  .filter((F.col("last_run_dt").isNull() | (F.col("last_run_dt")<date.today()-timedelta(days=iComplRetainPeriod))) & (F.col("non_compl_reason").isNull() | ~F.col("non_compl_reason").isin(1)) ) \
  .select("merchant_id", "mrch_mcc")
 
@@ -57,8 +57,8 @@ if df_mrch_to_process.count()<=0:
  print("{}:---> No merchants to process.".format(getDT()))
  sys.exit(0)
 
-print("{}:----- {}.trade_area_compl_mcc_mid_lat_lng -----".format(getDT(), sDBName) )
-df_mid_lat_lon = spark.table(sDBName + ".trade_area_compl_mcc_mid_lat_lng").repartition("mid").withColumnRenamed("mid", "merchant_id")
+print("{}:----- {}.tac_mcc_mid_lat_lng -----".format(getDT(), sDBName) )
+df_mid_lat_lon = spark.table(sDBName + ".tacc_mcc_mid_lat_lng").repartition("mid").withColumnRenamed("mid", "merchant_id")
 
 print("{}:----- Get Mrch/Lat-Lon -----".format(getDT()))
 df_mrch_in_lat = df_mrch_to_process.join(df_mid_lat_lon, ['merchant_id']) \
@@ -73,14 +73,14 @@ if mids_total<=0:
  print("{}:---> No merchants to do compliance check that have Lat/Lon data.".format(getDT()))
  sys.exit(0)
 
-print("{}:----- data_comm.merchant_red -----".format(getDT()) )
-df_red = spark.table("data_comm.merchant_red").select(F.trim(F.col("i_chn")).alias("i_chn") )
+print("{}:----- kmdb.blocked_merch -----".format(getDT()) )
+df_red = spark.table("kmdb.blocked_merch").select(F.trim(F.col("i_chn")).alias("i_chn") )
 
 lst_chns = df_red.rdd.flatMap(lambda x: x).collect()
 
 if len(lst_chns)<=0:
- print("{}:---> Red merchants list is blank, please check.".format(getDT()))
- sys.exit(0)
+ print("{}:---> Must have unallowed merchants, please check.".format(getDT()))
+ sys.exit(1)
 
 print("{}:     -----> {}".format(getDT(), len(lst_chns)) )
 b_lst_chns = spark.sparkContext.broadcast(lst_chns)
@@ -91,8 +91,8 @@ df_mid_red_excl_lat_lon = df_mid_lat_lon.filter(~F.col("chain_code").isin(b_lst_
 
 df_mid_red_excl_lat_lon.cache()
 
-print("{}:----- payments.stlmnt_dly -----".format(getDT()) )
-df_mrch_tran = spark.table("payments.stlmnt_dly") \
+print("{}:----- tran -----".format(getDT()) )
+df_mrch_tran = spark.table("kmdb.tran_dly") \
  .filter(~F.col("chain_code").isin(b_lst_chns.value) & F.col("process_date").between( int((date.today()-timedelta(days=366)).strftime('%Y%m%d')) , int((date.today()-timedelta(days=1)).strftime('%Y%m%d')) ) ) \
  .select('merchant_id', F.trim(F.col('mcc')).alias('mcc'), 'sales_amt', 'wic_sales_amt', 'ebt_sales_amt', 'sales_cnt').repartition('merchant_id', 'mcc') \
  .groupBy('merchant_id', 'mcc').agg(F.sum(F.col('sales_amt')+F.col('wic_sales_amt')+F.col('ebt_sales_amt')).alias('sales'), F.sum('sales_cnt').alias('sales_cnt')) \
@@ -121,8 +121,8 @@ while lowLimit <= mids_total:
  df_mid_comp_sales = df_mid_comp_dist.join(df_mrch_tran, ['comp_mid','mcc']) \
   .select('merchant_id', 'comp_mid','distance','sales', 'sales_cnt','mcc')
  
- print("{}:    ----- Write to {}.trade_area_compl_mcc_mid_dist_sales -----".format(getDT(), sDBName))
- df_mid_comp_sales.write.insertInto("{}.trade_area_compl_mcc_mid_dist_sales".format(sDBName), overwrite=bOverwrite )
+ print("{}:    ----- Write to {}.tac_mcc_mid_dist_sales -----".format(getDT(), sDBName))
+ df_mid_comp_sales.write.insertInto("{}.tac_mcc_mid_dist_sales".format(sDBName), overwrite=bOverwrite )
  
  bOverwrite = False
  lowLimit = upperLimit+1
