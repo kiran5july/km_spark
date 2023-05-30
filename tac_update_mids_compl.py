@@ -9,11 +9,11 @@ print("Input arguments:", sys.argv)
 #Check arguments
 if (len(sys.argv) != 6):
  print "Incorrect number of input arguments: Expected 5"
- print "1: db name (data_comm/vivid)"
+ print "1: db name"
  print "2: Job run date (Ex: 2020-09-15_17_13_54)"
  print "3: pass# (1 or 2 or 3)"
  print "4: extract_date for hisrtory table (Ex: 2020-09-15_17_13_54)"
- print "5: compl stage path (Ex: /lake/transform/worldpay/data_comm/trade_area_compl/trade_area_compl_mid_compl_stage"
+ print "5: compl stage path (Ex: /hdfs/tac_mid_compl_stage"
  sys.exit(1)
 
 sDBName = sys.argv[1]
@@ -24,11 +24,11 @@ s_compl_stage = sys.argv[5]
 
 
 if iPass == 1:
- s_agg_table = sDBName+".truspnd_trade_area_compl_mid_agg"
+ s_agg_table = sDBName+".tac_compl_mid_agg"
 elif iPass == 2:
- s_agg_table = sDBName+".truspnd_trade_area_compl_mid_agg_pass2"
+ s_agg_table = sDBName+".tac_compl_mid_agg_pass2"
 elif iPass == 3:
- s_agg_table = sDBName+".truspnd_trade_area_compl_mid_agg_pass3"
+ s_agg_table = sDBName+".tac_compl_mid_agg_pass3"
 else:
  print "ERROR: invalid input for Argument#3"
  print("1: {}\n2: {}\n3: {}\n4: {}\n5: {}".format(sDBName, s_job_run_date, iPass, s_ext_dt_hist, s_compl_stage) )
@@ -47,7 +47,7 @@ print("{}: getting spark session..".format(getDT()))
 spark = SparkSession \
  .builder \
  .enableHiveSupport() \
- .appName("KM TAC Merchant Market Share Pass1 Job PySpark") \
+ .appName("KM TAC Merch Market Share Pass1 Job PySpark") \
  .config("spark.executor.memoryOverhead", "4096") \
  .getOrCreate()
 
@@ -61,9 +61,9 @@ spark.conf.set("spark.io.compression.codec", "snappy")
 spark.conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 spark.conf.set("spark.sql.shuffle.partitions", "25")
 
-print("{}:----- {}.trade_area_compl_mid_compl".format(getDT(), sDBName) )
+print("{}:----- {}.tac_mid_compl".format(getDT(), sDBName) )
 #(merchant_id, mrch_mcc, compl_at, last_run_dt, non_compl_reason, compl_pass,exec_stg)
-df_mrch_compl = spark.table(sDBName+".trade_area_compl_mid_compl")
+df_mrch_compl = spark.table(sDBName+".tac_mid_compl")
 
 df_mrch_compl.cache()
 
@@ -115,18 +115,18 @@ df_compl_merged = df_compl_curr.unionAll(df_compl_prev ) \
 
 print("{}:   ---> Stage at: {}".format(getDT(), s_compl_stage) )
 df_compl_merged.write.mode('overwrite').parquet(s_compl_stage)
-#df_compl_merged.write.mode('overwrite').saveAsTable(sDBName + '.trade_area_compl_mid_compl')
+#df_compl_merged.write.mode('overwrite').saveAsTable(sDBName + '.tac_mid_compl')
 
 print("{}:   ---> Read stage data from: {}".format(getDT(), s_compl_stage) )
 df_compl_stg = spark.read.parquet(s_compl_stage)
 
 df_compl_stg.cache()
 
-print("{}:   ---> Write to {}.trade_area_compl_mid_compl".format(getDT(), sDBName))
-df_compl_stg.write.insertInto("{}.trade_area_compl_mid_compl".format(sDBName), overwrite=True )
+print("{}:   ---> Write to {}.tac_mid_compl".format(getDT(), sDBName))
+df_compl_stg.write.insertInto("{}.tac_mid_compl".format(sDBName), overwrite=True )
 
-print("{}:   ---> Write to {}.trade_area_compl_mid_compl_hist".format(getDT(), sDBName))
-df_compl_stg.withColumn('extract_date', F.lit(s_ext_dt_hist)).write.insertInto("{}.trade_area_compl_mid_compl_hist".format(sDBName), overwrite=True )
+print("{}:   ---> Write to {}.tac_mid_compl_hist".format(getDT(), sDBName))
+df_compl_stg.withColumn('extract_date', F.lit(s_ext_dt_hist)).write.insertInto("{}.tac_mid_compl_hist".format(sDBName), overwrite=True )
 
 print("{}:----- COMPLETE -----".format(getDT()) )
 
