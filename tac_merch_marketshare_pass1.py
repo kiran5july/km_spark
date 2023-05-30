@@ -9,7 +9,7 @@ print("Input arguments:", sys.argv)
 #Check arguments
 if (len(sys.argv) != 3):
  print "Incorrect number of input arguments: Expected 2"
- print "1: db name (data_comm/vivid)"
+ print "1: db name "
  print "2: extract_date for history table (Ex: 2020-09-15_17_13_54)"
  sys.exit(1)
 
@@ -27,7 +27,7 @@ print("{}: getting spark session..".format(getDT()))
 spark = SparkSession \
  .builder \
  .enableHiveSupport() \
- .appName("KM TAC Merchant Market Share Pass1 Job PySpark") \
+ .appName("KM TAC Merch Market Share Pass1 Job PySpark") \
  .config("spark.executor.memoryOverhead", "4096") \
  .getOrCreate()
 
@@ -43,9 +43,9 @@ spark.conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 spark.conf.set("spark.sql.shuffle.partitions", "25")
 
 
-print("{}:----- {}.trade_area_compl_mcc_mid_dist_sales -----".format(getDT(), sDBName) )
+print("{}:----- {}.tac_mcc_mid_dist_sales -----".format(getDT(), sDBName) )
 #(mid, mid_comp, distance, sales, sales_cnt, mcc)
-df_mrch_sales = spark.table(sDBName + ".trade_area_compl_mcc_mid_dist_sales")
+df_mrch_sales = spark.table(sDBName + ".tac_mcc_mid_dist_sales")
 
 df_mrch_sales.cache()
 
@@ -108,11 +108,11 @@ df_ms_final = df_ms_peer_cnt.join(df_ms_mktshare, ['mid','mcc'] ) \
 
 df_ms_final.cache()
 
-print("{}:----- Write to {}.truspnd_trade_area_compl_mid_agg -----".format(getDT(), sDBName))
-df_ms_final.write.insertInto("{}.truspnd_trade_area_compl_mid_agg".format(sDBName), overwrite=True )
+print("{}:----- Write to {}.tac_compl_mid_agg -----".format(getDT(), sDBName))
+df_ms_final.write.insertInto("{}.tac_compl_mid_agg".format(sDBName), overwrite=True )
 
-print("{}:----- Write to {}.truspnd_trade_area_compl_mid_agg_hist".format(getDT(), sDBName))
-df_ms_final.withColumn('extract_date', F.lit(s_ext_dt_hist)).write.insertInto("{}.truspnd_trade_area_compl_mid_agg_hist".format(sDBName), overwrite=True )
+print("{}:----- Write to {}.tac_mid_agg_hist".format(getDT(), sDBName))
+df_ms_final.withColumn('extract_date', F.lit(s_ext_dt_hist)).write.insertInto("{}.tac_compl_mid_agg_hist".format(sDBName), overwrite=True )
 
 print("{}:----- COMPLETE -----".format(getDT()) )
 
