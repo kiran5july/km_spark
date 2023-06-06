@@ -1,4 +1,19 @@
 
+#replace special chars (other than alpha & numeric) from string
+#pyspark
+import pyspark.sql.functions as F
+from pyspark.sql.types import StringType
+data = spark.createDataFrame(["aaa 12345,A", 'A 123 "Z', "ccc ,1 d", "ddddd_234_zxzxzx"], StringType()).toDF("name")
+data.withColumn('name2', F.regexp_replace(F.col('name'), "[^a-zA-Z0-9 /]+", "")).show(5)
++----------------+--------------+
+|            name|         name2|
++----------------+--------------+
+|     aaa 12345,A|    aaa 12345A|
+|        A 123 "Z|       A 123 Z|
+|        ccc ,1 d|       ccc 1 d|
+|ddddd_234_zxzxzx|ddddd234zxzxzx|
++----------------+--------------+
+
 
 #replace specific special characters in all (or more than one) column NAMES (NOT actual data)
 import re
@@ -8,6 +23,7 @@ df.columns
 => 'lastname', 'firstname'
 
 
+#-------extract specific characters
 #Pyspark/Python
 from pyspark.sql.types import StringType
 data = spark.createDataFrame(["aaaa_12345_xx", "bbbbb_123_yy", "ccc_0123_zzzz", "ddddd_234_zxzxzx"], StringType()).toDF("name")
