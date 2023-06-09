@@ -1,18 +1,33 @@
 
-#replace special chars (other than alpha & numeric) from string
+#sample dataset
 #pyspark
 import pyspark.sql.functions as F
 from pyspark.sql.types import StringType
-data = spark.createDataFrame(["aaa 12345,A", 'A 123 "Z', "ccc ,1 d", "ddddd_234_zxzxzx"], StringType()).toDF("name")
-data.withColumn('name2', F.regexp_replace(F.col('name'), "[^a-zA-Z0-9 /]+", "")).show(5)
-+----------------+--------------+
-|            name|         name2|
-+----------------+--------------+
-|     aaa 12345,A|    aaa 12345A|
-|        A 123 "Z|       A 123 Z|
-|        ccc ,1 d|       ccc 1 d|
-|ddddd_234_zxzxzx|ddddd234zxzxzx|
-+----------------+--------------+
+data = spark.createDataFrame(["aaa, 1234567890, $%()", 'A 123 "Z', "000,ccc ,000", "ddddd_234    A   B"], StringType()).toDF("name")
+
+#replace special chars (other than alpha, numeric & space) from string
+spark.createDataFrame(["aaa, 1234567890, $%()"], StringType()).toDF("name").withColumn('name2', F.regexp_replace(F.col('name'), "[^a-zA-Z0-9 ]+", "")).show(5,False)
++---------------------+---------------+
+|name                 |name2          |
++---------------------+---------------+
+|aaa, 1234567890, $%()|aaa 1234567890 |
++---------------------+---------------+
+
+#replace multiple spaces with single space
+spark.createDataFrame(["aaa   bbb"], StringType()).toDF("name").withColumn('name3', F.regexp_replace(F.col('name'), "\s+", " ")).show(5,False)
++---------+-------+
+|name     |name3  |
++---------+-------+
+|aaa   bbb|aaa bbb|
++---------+-------+
+
+#replace ONLY starting zeros (Not inside)
+spark.createDataFrame(["000ABC1234567890"], StringType()).toDF("name").withColumn('name3', F.regexp_replace(F.col('name'), r"^0+", '')).show(5,False)
++----------------+-------------+
+|name            |name3        |
++----------------+-------------+
+|000ABC1234567890|ABC1234567890|
++----------------+-------------+
 
 
 #replace specific special characters in all (or more than one) column NAMES (NOT actual data)
