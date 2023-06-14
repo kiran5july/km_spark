@@ -8,6 +8,10 @@ sMaxPartition = spark.sql("SHOW PARTITIONS kmdb.tbl1").select('partition').agg({
 #sMaxPartition = spark.sql("SHOW PARTITIONS kmdb.tbl1").select('partition').rdd.max()[0]
 #max_mrch_mast = spark.sql("SHOW PARTITIONS kmdb.tbl1").agg(F.max("partition")).collect()[0][0].replace("extract_date=","")
 
+if sMaxPartition==None:
+ print("{}: No partition fetched".format(getDT()))
+ sys.exit(100)
+
 iStartIndex = sMaxPartition.find('=')
 if iStartIndex<0:
  print("{}: No partition fetched".format(getDT()))
