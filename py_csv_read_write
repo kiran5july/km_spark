@@ -55,3 +55,10 @@ df.write.mode('append').options(sep='|', header='true', quoteAll='false').csv(ou
 #overwrite: creates if the directory doesn't exist
 
 
+--------------SCENARIO------------
+
+#check if delimiters (Ex: commas/,) count is more than expected
+df = spark.read.options(sep='\t').csv('/hdfs/path/file.csv')
+df.withColumn('delimiter_count', F.size(F.split(F.col('col1'),',')) ).filter(F.col('delimiter_count')>5).show(5)
+
+
