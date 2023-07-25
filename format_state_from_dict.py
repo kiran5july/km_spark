@@ -17,8 +17,25 @@ b_lst_format_state = spark.sparkContext.broadcast(state_abbr)
 addr_format_state = b_lst_format_state.value
 
 
-#------directly from dict --MAY NOT BE POSSIBLE AS DATA IS NOT RETURNED UNTIL ACTION ---
-data.withColumn('state_formatted', F.lit(addr_format_state.get(F.upper(F.col("state")).cast("string"), 'INVALID')) ).show(5)
+#------directly from dict --NOT EASY SOLUTION WITH withColumn(), BUT COULD DO IF COMVERTING TO RDD & BACK---
+data.withColumn('state', F.upper(F.col('state')) ).na.replace(addr_format_state, 1).show()
++-------+---+
+|  state|zip|
++-------+---+
+|     IL|123|
+|     NC|123|
+|     XX|123|
+|NEWYORK|123|
++-------+---+
+data.withColumn('state_formatted', F.lit(addr_format_state.get(F.upper(F.col("state")), 'INVALID')) ).show(5)
+data.withColumn('state_formatted', F.lit(addr_format_state.get(F.decode(F.upper(F.col('state')), 'UTF-8'), 'INVALID')) ).show(5)
+
+data.rdd.map(lambda x: Row(addr_format_state.get(x[0].upper(), 'INVALID')) ).toDF(['state']).show(5)
+
+data = spark.createDataFrame([('ILLINOIS','123'), ('North Carolina','123'), ('XX','123'), ('NEWYORK','123')]).toDF('state','zip')
+data.na.replace(addr_format_state, 1).show()
+data.rdd.map(lambda x: Row(addr_format_state.get(x[0].upper()),x[1]) ).toDF(['state','zip']).show(5)
+
 
 #------using create_map & chain
 from itertools import chain
