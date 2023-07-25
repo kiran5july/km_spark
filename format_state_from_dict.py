@@ -18,7 +18,7 @@ addr_format_state = b_lst_format_state.value
 
 
 #------directly from dict --NOT EASY SOLUTION WITH withColumn(), BUT COULD DO IF COMVERTING TO RDD & BACK---
-data.withColumn('state', F.upper(F.col('state')) ).na.replace(addr_format_state, 1).show()
+data.withColumn('state', F.upper(F.col('state')) ).na.replace(addr_format_state, subset=['state']).show()
 +-------+---+
 |  state|zip|
 +-------+---+
