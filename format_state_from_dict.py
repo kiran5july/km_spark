@@ -13,12 +13,12 @@ state_abbr = {'IOWA': 'IA', 'KANSAS': 'KS', 'FLORIDA': 'FL', 'VIRGINIA': 'VA', '
   'MASSACHUSETTS': 'MA', 'OHIO': 'OH', 'MARYLAND': 'MD', 'MICHIGAN': 'MI', 'WYOMING': 'WY', 'WASHINGTON': 'WA', 'OREGON': 'OR', 'SOUTH CAROLINA': 'SC',
   'INDIANA': 'IN', 'LOUISIANA': 'LA', 'NORTHERN MARIANA ISLANDS': 'MP', 'DISTRICT OF COLUMBIA': 'DC', 'MONTANA': 'MT', 'ARKANSAS': 'AR', 'WEST VIRGINIA': 'WV', 'TEXAS': 'TX'}
 
-b_lst_format_state = spark.sparkContext.broadcast(state_abbr)
-addr_format_state = b_lst_format_state.value
+br_lst_format_state = spark.sparkContext.broadcast(state_abbr)
 
 
-#------directly from dict --NOT EASY SOLUTION WITH withColumn(), BUT COULD DO IF COMVERTING TO RDD & BACK---
-data.withColumn('state', F.upper(F.col('state')) ).na.replace(addr_format_state, subset=['state']).show()
+#------directly from dict --NOT EASY SOLUTION WITH withColumn()---
+#--using na.replace()
+df2 = data.withColumn('state', F.upper(F.col('state')) ).na.replace(b_lst_format_state.value, subset=['state'])
 +-------+---+
 |  state|zip|
 +-------+---+
@@ -27,19 +27,27 @@ data.withColumn('state', F.upper(F.col('state')) ).na.replace(addr_format_state,
 |     XX|123|
 |NEWYORK|123|
 +-------+---+
-data.withColumn('state_formatted', F.lit(addr_format_state.get(F.upper(F.col("state")), 'INVALID')) ).show(5)
-data.withColumn('state_formatted', F.lit(addr_format_state.get(F.decode(F.upper(F.col('state')), 'UTF-8'), 'INVALID')) ).show(5)
+states_list = list( set(state_abbr.values()) )
+br_states_list = spark.sparkContext.broadcast(states_list)
 
-data.rdd.map(lambda x: Row(addr_format_state.get(x[0].upper(), 'INVALID')) ).toDF(['state']).show(5)
+df2.withColumn('state', F.when(F.col('state').isin(br_states_list.value), F.col('state')).otherwise(F.lit(None)) ).show(5)
 
-data = spark.createDataFrame([('ILLINOIS','123'), ('North Carolina','123'), ('XX','123'), ('NEWYORK','123')]).toDF('state','zip')
-data.na.replace(addr_format_state, 1).show()
-data.rdd.map(lambda x: Row(addr_format_state.get(x[0].upper()),x[1]) ).toDF(['state','zip']).show(5)
+--NOT WORKING---
+data.withColumn('state_formatted', F.lit(b_lst_format_state.value.get(F.upper(F.col("state")), 'INVALID')) ).show(5)
+data.withColumn('state_formatted', F.lit(b_lst_format_state.value.get(F.decode(F.upper(F.col('state')), 'UTF-8'), 'INVALID')) ).show(5)
+
+--convert between RDD & DF
+data.rdd.map(lambda x: Row(b_lst_format_state.value.get(x[0].upper(), 'INVALID')) ).toDF(['state']).show(5)
+
+data = spark.createDataFrame([('ILLINOIS','123'), ('North Carolina','123'), ('XX','123'), ('NEWYORK','123'), (None,None)]).toDF('state','zip')
+data.na.replace(b_lst_format_state.value, 1).show()
+data.rdd.map(lambda x: Row(b_lst_format_state.value.get(x[0].upper()),x[1]) ).toDF(['state','zip']).show(5)
+
 
 
 #------using create_map & chain
 from itertools import chain
-mapping_expr = F.create_map([F.lit(x) for x in chain(*addr_format_state.items())])
+mapping_expr = F.create_map([F.lit(x) for x in chain(*b_lst_format_state.value.items())])
 
 data.withColumn('state_formatted', mapping_expr.getItem(F.upper(F.col('state'))) ).show(5)
 +--------------+---------------+
@@ -54,12 +62,12 @@ data.withColumn('state_formatted', mapping_expr.getItem(F.upper(F.col('state')))
 
 #------using udf
 #one-liner udf
-formatSateUDF = F.udf(lambda x: addr_format_state.get(x, 'INVALID') )
+formatSateUDF = F.udf(lambda x: b_lst_format_state.value.get(x, 'INVALID') )
 
 #expanded udf
 def formatState(s):
- #addr_format_state = b_lst_format_state.value
- s = addr_format_state.get(s, 'INVALID')
+ #b_lst_format_state.value = b_lst_format_state.value
+ s = b_lst_format_state.value.get(s, 'INVALID')
  return s
 
 formatSateUDF = F.udf(lambda x: formatState(x))
@@ -87,4 +95,5 @@ def getStateAbbr2(mapping_list):
         return mapping_list.get(col.upper(), 'INVALID')
     return F.udf(translate_, StringType())
 
-data.withColumn("state_formatted", getStateAbbr(addr_format_state)('state') ).show(5)
+data.withColumn("state_formatted", getStateAbbr(b_lst_format_state.value)('state') ).show(5)
+
