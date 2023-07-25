@@ -20,6 +20,7 @@ df.repartition("i_mrchnt") \
 #-------broadcast python list (or any variable)
 #Get DF into List
 lst_merchants=df_new_merch.select("i_mrchnt").rdd.flatMap(lambda x: x).collect()
+#lst_merchants=df_new_merch.select("i_mrchnt").rdd.map(lambda x: x[0]).collect()
 
 b_lst_merchants=spark.sparkContext.broadcast(lst_merchants)
 
