@@ -52,6 +52,18 @@ df_data.withColumn("rownum", F.row_number().over(winRecCount) ).show()
 |  a| a2|       10|   200|     2|
 +---+---+---------+------+------+
 
+#-----ordering for data, blank & None/NULL (DESC: data, blank, NULL)
+winId = Window.partitionBy("id").orderBy(F.col('name').desc())
+df1 = spark.createDataFrame([("1", "abc"), ("1", ""), ("1", None)]).toDF("id", "name")
+df1.withColumn('rn', F.row_number().over(winId) ).show(5)
++---+----+---+
+| id|name| rn|
++---+----+---+
+|  1| abc|  1|
+|  1|    |  2|
+|  1|null|  3|
++---+----+---+
+
 #--------------------aggregate functions ----------------
 
 #---agg() using groupBy()
