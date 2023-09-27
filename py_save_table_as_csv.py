@@ -76,7 +76,7 @@ df_tbl_data.coalesce(1).write.option("sep",s_delimiter).mode('overwrite').csv(te
 
 print('{}:Saving to file: '.format(getDT()) + '/tmp/'+file_name )
 import os
-os.system('echo '+header_string+' > /tmp/'+file_name)
+os.system('echo "'+header_string+'" > /tmp/'+file_name)
 os.system('hdfs dfs -cat {}/* >> {}'.format(temp_hdfs_path, '/tmp/'+file_name) )
 
 print('{}:Saving to HDFS: '.format(getDT()) + s_path_save+path_sep+file_name )
