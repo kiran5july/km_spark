@@ -1,10 +1,12 @@
 
 ---------split string
-df1 = spark.createDataFrame([("1", "abc xyz"), ("2","def g hij")]).toDF("id", "full_name")
+df1 = spark.createDataFrame([("1", "abc xyz"), ("2","def g hij"), ("3", "abcd")]).toDF("id", "full_name")
 
 df1.withColumn('name_strings', F.split(F.col('full_name'),' ')) \
  .withColumn('first_name', F.col('name_strings')[0] ) \
  .withColumn('last_name', F.element_at(F.col('name_strings'),-1) ).show(5)
+
+# .withColumn('last_name', F.when(F.size(F.col('name_strings'))>1, F.element_at(F.col('name_strings'),-1) ).otherwise(''))
 
 
 --FULL: populate if null/blank
