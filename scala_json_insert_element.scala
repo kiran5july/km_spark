@@ -17,20 +17,28 @@ Sample data:
 {"id":"1","event":{"location":{"id":"1", "country":""},"location3":{"country":"US"}},"date":1575912010}
 {"id":"2","event":{"location":{"id":"2", "country":"CA"},"location3":{"country":""}},"date":1575912070}
 
-//Method#1: read json & update using schema
-
-
-//Method#2: add/update particular element (add id inside location)
 val df_json = spark.read.json("file:////home/km/km/km_practice/data/event_locations.json")
 
-val df_json2 = df_json.withColumn("event_str", to_json($"event"))
-import org.apache.spark.sql.functions.{from_json,to_json}
+
+//direct update element inside struct field
+val df_json2 = df_json.withColumn("event2", $"event".withField("location.id", $"id")).
+ withColumn("event2_str", to_json($"event2"))
+
+df_json2.select("id","event2_str").withColumnRenamed("event2_str","event").show(5,false)
+
+
+
+//add/update particular element (add id inside location) in json string column & complex schema
+//prep
+val df_json2 = df_json.withColumn("event_str", to_json($"event")).drop("event")
+
+import org.apache.spark.sql.functions.{from_json, to_json}
 import org.apache.spark.sql.types.{StructType,MapType,StringType}
-val df_json2_x = df_json2.withColumn("event2", from_json($"event_str", MapType(StringType, StringType) )).select("id","event_str","event2")
+val df_json2_x = df_json2.withColumn("event_map", from_json($"event_str", MapType(StringType, StringType) )).select("id","event_str","event_map")
 df_json2_x.show(5,false)
 
 
-//df_json2_x.withColumn("location_str", $"event2.location").show(5,false)
+//df_json2_x.withColumn("location_str", $"event_map.location").show(5,false)
 
 import org.apache.spark.sql.catalyst.ScalaReflection
 case class Location(id: Option[String], country: Option[String])
@@ -40,9 +48,9 @@ val updateMrch = udf((m : Map[String, String], loc_new: String) =>
      m.map{ case (key, value) => (key, if (key == "location") loc_new else value) }
 )
 
-val df_json2_x2 = df_json2_x.withColumn("location", to_json(from_json($"event2.location", schema_loc).withField("id", $"id"))).
- withColumn("event2", updateMrch($"event2", $"location") ).
- withColumn("event_str2", to_json($"event2")).select("id","event_str", "event_str2").
+val df_json2_x2 = df_json2_x.withColumn("location", to_json(from_json($"event_map.location", schema_loc).withField("id", $"id"))).
+ withColumn("event_map", updateMrch($"event_map", $"location") ).
+ withColumn("event_str2", to_json($"event_map")).select("id","event_str", "event_str2").
  withColumn("event_str2", regexp_replace($"event_str2", lit("\\\\"), lit("") ))  //.show(5,false)
 
 
