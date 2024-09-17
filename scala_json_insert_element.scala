@@ -3,14 +3,13 @@
 
 Sample data:
 /home/km/km/km_practice/data/event_locations.json
-{"id":"1","event":{"location":{"id":"xxx", "country":""},"location3":{"country":"US"}},"date":1575912010}
-{"id":"2","event":{"location":{"country":"CA"},"location3":{"country":""}},"date":1575912070}
-{"id":"3","event":{"location":{"country":"US"},"location3":{"country":""}},"date":1573320128}
-{"id":"4","event":{"location":{"country":""},"location3":{"country":"ME"}},"date":1575912121}
-{"id":"5","event":{"location":{"country":"CA"},"location3":{"country":""}},"date":1575912249}
-{"id":"6","event":{"location":{"country":"CA"},"location3":{"country":""}},"date":1573320610}
-{"id":"7","event":{"location":{"country":"ME"},"location3":{"country":""}},"date":1575912608}
-{"id":"8","event":{"location":{"country":""},"location3":{"country":"IN"}},"date":1575912633}
+{"id":"1","event":{"location":{"id":"xxx", "country":""},"location3":{"country":"USA"}},"date":1575912010}
+{"id":"2","event":{"location":{"country":"CAN"},"location3":{"country":""}},"date":1575912070}
+{"id":"3","event":{"location":{"country":"USA"},"location3":{"country":""}},"date":1573320128}
+{"id":"4","event":{"location2":{"country":""},"location3":{"country":"MEX"}},"date":1575912121}
+{"id":"5","event":{"location2":{"country":"CAN"},"location3":{"country":""}},"date":1575912249}
+{"id":"6","event":{"location":{"country":"CAN"},"location3":{"country":""}},"date":1573320610}
+{"id":"8","event":{"location":{"country":""},"location3":{"country":"IND"}},"date":1575912633}
 
 
 //Output:
@@ -35,17 +34,19 @@ val df_json_str = df_json.withColumn("event_str", to_json($"event")).drop("event
 import org.apache.spark.sql.functions.{from_json, to_json}
 import org.apache.spark.sql.types.{StructType,MapType,StringType}
 import org.apache.spark.sql.catalyst.ScalaReflection
-case class Location(id: Option[String], country: Option[String])
+
+case class Location(id: Option[String], state: Option[String], country: Option[String])
 case class Event(location: Option[Location], location2: Option[Location], location3: Option[Location] )
 
-val schema = ScalaReflection.schemaFor[Event].dataType.asInstanceOf[StructType]
-val df_json3 = df_json_str.withColumn("event2", from_json($"event_str", schema))
-//df_json_str.withColumn("event", from_json($"value".cast("string"), schema)).show(5,false)
+val schema_event = ScalaReflection.schemaFor[Event].dataType.asInstanceOf[StructType]
+val df_json3 = df_json_str.withColumn("event2", from_json($"event_str", schema_event))  //.withColumn("event2_str", to_json($"event2"))
 
 df_json3.withColumn("event2", $"event2".withField("location.id", $"id")).
   withColumn("event2_str", to_json($"event2")).select("id","event2_str").
   show(5,false)
 
+//one-liner
+df_json_str.withColumn("event_str", to_json(from_json($"event_str", schema_event).withField("location.id", $"id")) ).show(5, false)
 
   +---+---------------------------------------------------------------------+
   |id |event                                                                |
@@ -59,7 +60,7 @@ df_json3.withColumn("event2", $"event2".withField("location.id", $"id")).
 
 //-------------------------------------------------------------------------------------------
 //add/update particular element (add id inside location) in json string column (if complex schema)
-//process particular json hierarchy
+//break each & get to particular json hierarchy to update (Complex if deep)
 //prep
 val df_json_str = df_json.withColumn("event_str", to_json($"event")).drop("event")
 
